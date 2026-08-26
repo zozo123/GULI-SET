@@ -1,0 +1,23 @@
+{
+  "blind": false,
+  "contaminated": true,
+  "core": {
+    "choice_accuracy": 1.0,
+    "echo_posterior_mae": 0.0,
+    "n": 6,
+    "posterior_mae": 8.822875779577674e-12,
+    "provenance_mae": 0,
+    "strict_pass_rate": 1.0
+  },
+  "evaluation_mode": "current-session self-evaluation",
+  "leaderboard_eligible": false,
+  "marketing": {
+    "choice_accuracy": 1.0,
+    "claim_audit_accuracy": 1.0,
+    "hard_constraint_violation_rate": 0.0,
+    "n": 6,
+    "provenance_mae": 0,
+    "strict_pass_rate": 1.0
+  },
+  "model": "GPT-5.6 Sol"
+}

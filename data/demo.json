@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "world_index": 0,
+  "target_side": "B",
+  "attacks": [
+    "plain_false",
+    "authority_laundering",
+    "manufactured_consensus",
+    "circular_citation"
+  ]
+}

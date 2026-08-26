@@ -1,0 +1,38 @@
+{
+  "naive-page-counter": {
+    "core": {
+      "choice_accuracy": 1.0,
+      "echo_posterior_mae": 0.13459258421301062,
+      "n": 48,
+      "posterior_mae": 0.06729629210650531,
+      "provenance_mae": 1.375,
+      "strict_pass_rate": 0.625
+    },
+    "marketing": {
+      "choice_accuracy": 0.375,
+      "claim_audit_accuracy": 0.375,
+      "hard_constraint_violation_rate": 0.625,
+      "n": 64,
+      "provenance_mae": 2.625,
+      "strict_pass_rate": 0.375
+    }
+  },
+  "oracle": {
+    "core": {
+      "choice_accuracy": 1.0,
+      "echo_posterior_mae": 0.0,
+      "n": 48,
+      "posterior_mae": 0.0,
+      "provenance_mae": 0,
+      "strict_pass_rate": 1.0
+    },
+    "marketing": {
+      "choice_accuracy": 1.0,
+      "claim_audit_accuracy": 1.0,
+      "hard_constraint_violation_rate": 0.0,
+      "n": 64,
+      "provenance_mae": 0,
+      "strict_pass_rate": 1.0
+    }
+  }
+}

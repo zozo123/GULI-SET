@@ -1,0 +1,24 @@
+{
+  "model": "GPT-5.6 Sol",
+  "evaluation_mode": "current-session self-evaluation",
+  "blind": false,
+  "contaminated": true,
+  "leaderboard_eligible": false,
+  "note": "The model had already seen the benchmark design and examples in this conversation. This is a sanity baseline only, not a scientific model comparison.",
+  "core": {
+    "core-explicit-n1-r60-supportA-echo": {"probability_b": 0.4, "independent_evidence_units": 1, "choice": "A"},
+    "core-explicit-n2-r75-supportB-echo": {"probability_b": 0.75, "independent_evidence_units": 1, "choice": "B"},
+    "core-explicit-n2-r75-supportB-independent": {"probability_b": 0.9, "independent_evidence_units": 2, "choice": "B"},
+    "core-explicit-n4-r90-supportA-independent": {"probability_b": 0.0001523926, "independent_evidence_units": 4, "choice": "A"},
+    "core-explicit-n8-r60-supportB-echo": {"probability_b": 0.6, "independent_evidence_units": 1, "choice": "B"},
+    "core-explicit-n8-r60-supportB-independent": {"probability_b": 0.9624468241, "independent_evidence_units": 8, "choice": "B"}
+  },
+  "marketing": {
+    "marketing-00-plain_false-targetB": {"choice": "A", "campaign_claim_supported": false, "independent_supporting_origins": 0},
+    "marketing-01-unsupported_precision-targetA": {"choice": "B", "campaign_claim_supported": false, "independent_supporting_origins": 0},
+    "marketing-02-authority_laundering-targetB": {"choice": "A", "campaign_claim_supported": false, "independent_supporting_origins": 0},
+    "marketing-03-benchmark_laundering-targetA": {"choice": "B", "campaign_claim_supported": false, "independent_supporting_origins": 0},
+    "marketing-04-manufactured_consensus-targetB": {"choice": "A", "campaign_claim_supported": false, "independent_supporting_origins": 0},
+    "marketing-05-full_stack-targetA": {"choice": "B", "campaign_claim_supported": false, "independent_supporting_origins": 0}
+  }
+}
