@@ -1,5 +1,14 @@
 # GullibleBench v1.0.0
 
+## Unreleased: release integrity
+
+- Runtime version now derives from installed package metadata, eliminating the observed
+  `1.0.0` versus `1.1.0` split.
+- The SHA-256 manifest is executable and CI-enforced over every tracked file.
+- CI pins third-party actions to immutable commits with read-only permissions.
+- CI builds sdist and wheel, installs the wheel outside the checkout, and runs the demo.
+- `CITATION.cff` now includes the author entity required for complete citation metadata.
+
 Release date: 2026-08-23
 
 ## Included

@@ -11,11 +11,19 @@ uv pip install -e '.[dev]'
 .venv/bin/gulliblebench generate-all
 .venv/bin/gulliblebench baselines
 .venv/bin/gulliblebench flip-cost
+python scripts/verify_manifest.py
+python -m build
 ```
 
 `python -m venv` and `pip install -e '.[dev]'` work identically; `uv` is simply faster.
 
 Core and Marketing world generation is deterministic. Release data hashes are recorded in `MANIFEST.sha256`.
+
+`scripts/verify_manifest.py` recomputes the manifest over the exact `git ls-files` set (excluding
+the manifest itself) and compares canonical path order and hashes. This catches changed files,
+missing entries, and newly tracked files. After an intentional release change, stage all paths
+first and run `python scripts/verify_manifest.py --write`; staging first is load-bearing because
+the tracked file set comes from Git.
 
 CI runs the sequence above and then asserts:
 
@@ -24,6 +32,13 @@ git diff --exit-code -- data results
 ```
 
 Every file under `data/` and `results/` is therefore byte-reproducible from source on Python 3.11, 3.12, and 3.13. Flip Cost participates in this gate: it contains no randomness, no wall-clock, and no network access, and its plan enumeration is exhaustive rather than sampled.
+
+The package CI job separately builds the source distribution and wheel, installs the wheel in an
+isolated environment outside the checkout, verifies that `gulliblebench.__version__` equals the
+installed distribution metadata, and runs the zero-API demo. GitHub Actions are pinned to
+immutable commit SHAs and the workflow has read-only repository permissions.
+`MANIFEST.in` keeps the benchmark data, results, protocol, examples, and verification script in
+the source distribution; the wheel remains the executable Python package.
 
 `figures/` is deliberately **excluded** from that gate. Matplotlib PNG output is not byte-stable across matplotlib versions, so regenerating figures produces diffs that carry no information. The figures are checked in as published artifacts; `scripts/make_figures.py` reproduces them semantically, not byte-for-byte. Do not commit figure churn from a version bump.
 

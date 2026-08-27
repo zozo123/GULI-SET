@@ -175,9 +175,21 @@ python examples/first_pair.py
 python examples/synthetic_web_demo.py
 python examples/meta_harness_demo.py
 python examples/flip_cost_demo.py
+python scripts/verify_manifest.py
+python -m build
 ```
 
-CI runs exactly this sequence and then asserts `git diff --exit-code -- data results`, so every committed dataset and result is byte-reproducible from source.
+CI runs exactly this sequence and then asserts `git diff --exit-code -- data results`, so every committed dataset and result is byte-reproducible from source. A separate package job verifies every tracked file against `MANIFEST.sha256`, builds both sdist and wheel, installs the wheel outside the checkout, checks runtime/package version agreement, and runs the demo from that installed artifact.
+
+When intentionally changing a tracked release file, stage the complete file set and regenerate
+the canonical manifest:
+
+```bash
+git add <changed paths>
+python scripts/verify_manifest.py --write
+git add MANIFEST.sha256
+python scripts/verify_manifest.py
+```
 
 For a machine-readable trace artifact:
 

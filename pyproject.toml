@@ -18,7 +18,7 @@ Repository = "https://github.com/zozo123/GULI-SET.git"
 Issues = "https://github.com/zozo123/GULI-SET/issues"
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "hypothesis>=6", "ruff>=0.6"]
+dev = ["build>=1.2,<2", "pytest>=8", "hypothesis>=6", "ruff>=0.6"]
 inspect = ["inspect-ai>=0.3"]
 analysis = ["matplotlib>=3.8"]
 
