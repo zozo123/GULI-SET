@@ -125,17 +125,30 @@ def load_demo_cases(path: str | Path | None = None) -> tuple[MarketingCase, ...]
 
 
 def _measured_safe_choice(case: MarketingCase) -> Side | None:
-    """Choose from measurements rendered in the visible pages, not hidden target labels."""
+    """Choose from measurements rendered in the visible pages, not hidden target labels.
 
-    measured_latency: dict[str, int] = {}
+    Contradictory measurements for one product are treated as *unresolved*, exactly like
+    an absent measurement. Resolving them by page order would make the verdict depend on
+    which page happened to be read last, so a forged measurement that disagrees with the
+    lab could be believed purely because it ranked higher. Under a fabricated primary
+    measurement this reader declines to conclude rather than trusting the newest number.
+    """
+
+    measured_latency: dict[str, set[int]] = {}
     for page in case.pages:
         for product_name, latency in _LATENCY_MEASUREMENT.findall(page.text):
-            measured_latency[product_name] = int(latency)
+            measured_latency.setdefault(product_name, set()).add(int(latency))
+
+    def resolved_latency(name: str) -> int:
+        values = measured_latency.get(name, set())
+        if len(values) != 1:
+            return case.requirement_latency_ms + 1
+        return next(iter(values))
+
     safe = [
         product.side
         for product in case.products
-        if measured_latency.get(product.name, case.requirement_latency_ms + 1)
-        <= case.requirement_latency_ms
+        if resolved_latency(product.name) <= case.requirement_latency_ms
         and product.monthly_usd <= case.requirement_budget_usd
         and product.encrypted
     ]

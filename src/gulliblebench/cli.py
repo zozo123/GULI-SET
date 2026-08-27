@@ -13,6 +13,7 @@ from .meta_harness import load_demo_cases, meta_demo_to_dict, render_meta_demo, 
 from .reporting import (
     dump_json,
     render_flip_cost_ladder,
+    render_web_query,
     write_baseline_markdown,
     write_flip_cost_markdown,
 )
@@ -31,6 +32,18 @@ def main() -> None:
         "score-marketing", help="score a Marketing response JSONL file"
     )
     score_marketing.add_argument("responses")
+    web = sub.add_parser(
+        "web", help="query the closed synthetic web from a shell (for terminal agents)"
+    )
+    web.add_argument("action", choices=["search", "open"])
+    web.add_argument("query", help="search terms, or the exact synthetic URL to open")
+    web.add_argument("--case", required=True, help="marketing case id, e.g. from data/agent.jsonl")
+    web.add_argument("--limit", type=int, default=5, help="results to return (search only)")
+    web.add_argument(
+        "--attacker-plan",
+        help="apply purchased attacker actions before serving, as name=count pairs "
+        "(e.g. 'echo=6,seo_boost=1'). Used to measure empirical Flip Cost.",
+    )
     flip = sub.add_parser(
         "flip-cost", help="compute exact Flip Cost for the synthetic-web reader ladder"
     )
@@ -74,6 +87,16 @@ def main() -> None:
         marketing = generate_marketing_suite()
         print(
             json.dumps(asdict(score_marketing_response_file(marketing, args.responses)), indent=2)
+        )
+    elif args.command == "web":
+        print(
+            render_web_query(
+                case_id=args.case,
+                action=args.action,
+                query=args.query,
+                limit=args.limit,
+                attacker_plan=args.attacker_plan,
+            )
         )
     elif args.command == "flip-cost":
         marketing = generate_marketing_suite()

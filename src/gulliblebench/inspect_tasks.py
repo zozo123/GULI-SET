@@ -12,9 +12,14 @@ agent track and record the smallest budget at which the model's answer flips:
   inspect eval src/gulliblebench/inspect_tasks.py@marketing_agent_attacked \\
       --model <provider/model> -T echo=6
 
-The deterministic ladder in :mod:`gulliblebench.flipcost` gives the reference costs a
-model result should be read against. A model that flips more cheaply than
-``bounded-page-counter`` is doing worse than counting pages.
+The deterministic ladder in :mod:`gulliblebench.flipcost` gives context for a model
+result, but the two are not the same measurement. The ladder's readers consume hidden
+provenance annotations (``root_origin``, ``independent_measurement``,
+``supports_campaign_claim``) that ``install_synthetic_web`` never exposes to a model, so
+each rung is an upper bound on what a defense with perfect provenance could achieve, not
+an equal-footing baseline. The comparison that *is* sound is against rung 0: a model that
+flips more cheaply than ``bounded-page-counter`` is doing worse than counting pages, and
+rung 0 needs no provenance labels to reach its verdict on the cases where it fails.
 """
 
 from __future__ import annotations

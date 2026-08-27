@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gulliblebench"
-version = "1.0.0"
+version = "1.1.0"
 description = "GULI-SET: a causal benchmark and process-improvement lab for manufactured consensus."
 readme = "README.md"
 requires-python = ">=3.11"

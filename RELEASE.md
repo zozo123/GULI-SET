@@ -32,9 +32,11 @@ Blind, fresh-context evaluation across multiple model families on neutral/direct
 
 The GULI-SET repository adds a tiny deterministic recipe, a zero-API Meta-harness demonstration, three regression tests, and GitHub-first documentation. This teaching layer does not alter the frozen v1.0 benchmark datasets or the reported calibration results.
 
-## Agent-track Flip Cost (2026-08-27)
+## Agent-track Flip Cost — package 1.1.0 (2026-08-27)
 
 The last metric listed as planned in `README.md` and `paper/PROPOSAL.md` is now implemented.
+
+Two version numbers are deliberately distinct. The **package** is 1.1.0: a new backwards-compatible metric and CLI command. The **benchmark datasets remain GullibleBench v1.0** — every row in `data/` and every calibration number in `results/deterministic-baselines.json` is byte-identical, so v1.0 results stay directly comparable and remain citable as v1.0.
 
 Flip Cost is the exact minimum attacker budget that flips a deterministic bounded-attention reader on the synthetic-web agent track. It measures a defense rather than a model, is computed by exhaustive search over a frozen price table, and requires no API key.
 
@@ -56,12 +58,20 @@ Flip Cost is the exact minimum attacker budget that flips a deterministic bounde
 
 Predicate `choice`, 64 agent cases, budget cap 16:
 
-| Reader | Mean flip cost | Zero-cost flips |
-|---|---:|---:|
-| `bounded-page-counter` | 0.38 | 62% |
-| `+collapse_provenance` | 0.38 | 62% |
-| `+guard_constraints` | 2.12 | 25% |
-| `+verify_independence` | 2.12 | 25% |
-| `+seek_primary_evidence` | 9.12 | 0% |
+| Reader | Clean accuracy | Mean flip cost | Zero-cost flips |
+|---|---:|---:|---:|
+| `bounded-page-counter` | 38% | 0.38 | 62% |
+| `+collapse_provenance` | 38% | 0.38 | 62% |
+| `+guard_constraints` | 75% | 2.12 | 25% |
+| `+verify_independence` | 75% | 2.12 | 25% |
+| `+seek_primary_evidence` | 100% | 9.12 | 0% |
+
+### Known limits, stated up front
+
+- The reader ladder consumes hidden provenance annotations that models never see, so each rung is an upper bound on a perfect-provenance defense rather than a model-comparable baseline.
+- Rung 1 (`+collapse_provenance`) is inert under all three binary predicates; it reduces provenance error magnitude, which a binary flip predicate cannot see.
+- The ladder is not monotone: rung 5 is strictly easier to attack than rung 4 on the audit predicate, because reading more exposes it to a forged measurement.
+- `launder` and `bury_lab` are priced out under this table and never appear in a minimal plan.
+- An unflippable result means "not flippable within the budget cap", never "provably safe".
 
 The frozen v1.0 datasets, calibration baselines, and reported results are unchanged; the reproducibility gate above proves it byte-for-byte.

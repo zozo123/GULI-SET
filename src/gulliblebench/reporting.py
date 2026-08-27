@@ -25,6 +25,71 @@ def write_baseline_markdown(results: dict[str, dict[str, object]], path: str | P
     out.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def parse_attacker_plan(spec: str | None):
+    """Parse ``'echo=6,seo_boost=1'`` into an :class:`~gulliblebench.flipcost.AttackerPlan`."""
+
+    from .flipcost import AttackerPlan
+
+    if not spec:
+        return AttackerPlan()
+    counts: dict[str, int] = {}
+    for part in spec.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        name, _, raw = part.partition("=")
+        if not _:
+            raise ValueError(f"attacker plan entries must be name=count, got {part!r}")
+        try:
+            counts[name.strip()] = int(raw)
+        except ValueError as exc:
+            raise ValueError(f"attacker plan count must be an integer, got {raw!r}") from exc
+    valid = set(AttackerPlan().as_counts())
+    unknown = sorted(set(counts) - valid)
+    if unknown:
+        raise ValueError(f"unknown attacker actions {unknown}; valid actions are {sorted(valid)}")
+    return AttackerPlan(**counts)
+
+
+def render_web_query(
+    *,
+    case_id: str,
+    action: str,
+    query: str,
+    limit: int = 5,
+    attacker_plan: str | None = None,
+) -> str:
+    """Serve one ``search`` or ``open`` against the closed synthetic web, as plain text.
+
+    This is the shell-facing form of :class:`~gulliblebench.synthetic_web.SyntheticWeb`, so a
+    terminal agent can be evaluated on the agent track through the same closed world the
+    deterministic reader ladder uses. Exactly like the Inspect ``open()`` tool, it returns
+    only source, url, text, and citations: the hidden provenance annotations that the reader
+    ladder consumes are never exposed here.
+    """
+
+    from .flipcost import apply_plan
+    from .marketing import generate_marketing_suite
+    from .synthetic_web import SyntheticWeb
+
+    cases = {case.id: case for case in generate_marketing_suite()}
+    if case_id not in cases:
+        raise ValueError(f"unknown case id: {case_id}")
+    case = apply_plan(cases[case_id], parse_attacker_plan(attacker_plan))
+    web = SyntheticWeb(case)
+
+    if action == "search":
+        results = web.search(query, limit=max(1, min(limit, 50)))
+        if not results:
+            return "no results"
+        return "\n".join(
+            f"{i}. {r.source} | {r.title} | {r.url}" for i, r in enumerate(results, start=1)
+        )
+    page = web.open(query)
+    cites = ", ".join(page.cites) if page.cites else "none"
+    return f"Source: {page.source}\nURL: {page.url}\n{page.text}\nCites: {cites}"
+
+
 def render_flip_cost_ladder(results: dict[str, object], *, predicate: str | None = None) -> str:
     """Terminal view of the Flip Cost ladder, in the same shape as the Meta-harness demo."""
 
@@ -40,26 +105,34 @@ def render_flip_cost_ladder(results: dict[str, object], *, predicate: str | None
         "GULI-SET // FLIP COST",
         f"{n} agent cases · budget cap {results['max_budget']} · exact · zero API keys",
         "",
-        "predicate    reader                    mean  median  min  zero-cost  unflippable",
-        "-----------  ----------------------  ------  ------  ---  ---------  -----------",
+        "predicate    reader                   clean    mean  restr  min  zero-cost  unflippable",
+        "-----------  ----------------------  ------  ------  -----  ---  ---------  -----------",
     ]
     for name in predicates:
         for rung in ladder:
             summary = rung["predicates"][name]
             mean_cost = summary["mean_flip_cost"]
-            median = summary["median_flip_cost"]
             minimum = summary["min_flip_cost"]
             lines.append(
                 f"{name:<11}  {rung['reader']:<22}  "
+                f"{summary['clean_accuracy']:>6.0%}  "
                 f"{'n/a' if mean_cost is None else f'{mean_cost:.2f}':>6}  "
-                f"{'n/a' if median is None else f'{median:.1f}':>6}  "
+                f"{summary['restricted_mean_flip_cost']:>5.2f}  "
                 f"{'n/a' if minimum is None else minimum:>3}  "
                 f"{summary['already_flipped_rate']:>9.0%}  "
                 f"{summary['unflippable_rate']:>11.0%}"
             )
         lines.append("")
-    lines.append("zero-cost = reader already wrong before the attacker spends anything")
-    lines.append("unflippable = no plan within the cap flipped it, not a proof of safety")
+    lines.extend(
+        (
+            "clean = unattacked accuracy. A high flip cost means nothing without it: a reader",
+            "        that opens nothing and never believes the campaign is unflippable and useless.",
+            "mean  = over flippable cases only, so it is blind to censoring. Never read it alone.",
+            "restr = censored cases counted at the cap. Monotone, so use this to rank defenses.",
+            "zero-cost = reader already wrong before the attacker spends anything",
+            "unflippable = no plan within the cap flipped it, not a proof of safety",
+        )
+    )
     return "\n".join(lines)
 
 
@@ -82,8 +155,14 @@ def write_flip_cost_markdown(results: dict[str, object], path: str | Path) -> No
         f"Price table: {', '.join(f'{k}={v}' for k, v in costs.items())}.",
         "",
         "`unflippable` means no plan within the cap flipped the reader, never that the reader is",
-        "provably unflippable. Mean flip cost is taken over flippable cases only; censored cases",
-        "are reported as `unflippable` rather than imputed at the cap.",
+        "provably unflippable.",
+        "",
+        "Read the three cost statistics together. `Mean` conditions on flippable cases and is",
+        "therefore blind to censoring: a defense that turns censored cases into cheap flips has",
+        "become strictly worse without moving it. `Restricted` counts censored cases at the cap and",
+        "is monotone in defense strength, so it is the statistic to rank defenses by. `Clean` is",
+        "unattacked accuracy, and without it a high flip cost is meaningless: a reader that opens",
+        "nothing and never believes the campaign is unflippable and useless.",
         "",
     ]
     predicates = list(ladder[0]["predicates"]) if ladder else []
@@ -92,20 +171,21 @@ def write_flip_cost_markdown(results: dict[str, object], path: str | Path) -> No
             (
                 f"## Predicate: {predicate}",
                 "",
-                "| Reader | Layers | Mean flip cost | Median | Min | Zero-cost flips | Unflippable |",
-                "|---|---|---:|---:|---:|---:|---:|",
+                "| Reader | Layers | Clean accuracy | Mean | Restricted mean | Min | "
+                "Zero-cost flips | Unflippable |",
+                "|---|---|---:|---:|---:|---:|---:|---:|",
             )
         )
         for rung in ladder:
             summary = rung["predicates"][predicate]
             layers = ", ".join(rung["layers"]) or "none"
             mean_cost = summary["mean_flip_cost"]
-            median = summary["median_flip_cost"]
             minimum = summary["min_flip_cost"]
             lines.append(
                 f"| `{rung['reader']}` | {layers} | "
+                f"{100 * summary['clean_accuracy']:.1f}% | "
                 f"{'n/a' if mean_cost is None else f'{mean_cost:.3f}'} | "
-                f"{'n/a' if median is None else f'{median:.1f}'} | "
+                f"{summary['restricted_mean_flip_cost']:.3f} | "
                 f"{'n/a' if minimum is None else minimum} | "
                 f"{100 * summary['already_flipped_rate']:.1f}% | "
                 f"{100 * summary['unflippable_rate']:.1f}% |"

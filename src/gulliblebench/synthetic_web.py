@@ -7,6 +7,10 @@ from .marketing import MarketingCase, MarketingPage
 
 _TOKEN = re.compile(r"[a-z0-9]+")
 
+#: Ranking scores are rounded to this many decimals before sorting, so that ties are
+#: broken by url as documented rather than by floating-point summation order.
+SCORE_PRECISION = 9
+
 
 @dataclass(frozen=True, slots=True)
 class SearchResult:
@@ -33,7 +37,10 @@ class SyntheticWeb:
         for p in self.case.pages:
             body = self._tokens(f"{p.title} {p.text} {p.source}")
             overlap = len(q & body) / max(1, len(q))
-            score = overlap + p.search_boost
+            # Rounded so that scores which are mathematically equal but summed from
+            # different float terms compare equal, and the url tie-break below is
+            # actually reachable. Without this, ranking depends on ~1e-16 noise.
+            score = round(overlap + p.search_boost, SCORE_PRECISION)
             ranked.append(SearchResult(p.url, p.title, p.source, score))
         ranked.sort(key=lambda x: (-x.score, x.url))
         return tuple(ranked[:limit])

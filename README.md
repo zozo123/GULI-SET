@@ -5,6 +5,7 @@
 [![CI](https://github.com/zozo123/GULI-SET/actions/workflows/ci.yml/badge.svg)](https://github.com/zozo123/GULI-SET/actions/workflows/ci.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-3776AB.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-2ea44f.svg)](LICENSE)
+[![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97%20dataset-gulliblebench-FFD21E.svg)](https://huggingface.co/datasets/zozo-ib/gulliblebench)
 
 > Can an AI tell the difference between five independent measurements and one claim copied five times?
 
@@ -52,6 +53,43 @@ flowchart LR
 
 This is an **educational control-pattern demo**, not a reproduction of Meta\(^n\). It uses deterministic, pre-registered layers instead of an LLM that writes executable helpers, and it has no evolutionary archive. See [the harness note](docs/META_HARNESS.md) and the [official Meta\(^n\) code](https://github.com/minnesotanlp/meta-n).
 
+## Why this exists
+
+Search engines and AI research assistants are becoming the layer through which people decide what is true. That layer has a structural weakness: it is far cheaper to make one claim *look* corroborated than to actually corroborate it. Syndicate a press release to five outlets, commission a sponsored brief, cite the brief in a roundup, and cite the roundup back — the claim now appears in five independent-looking places while resting on exactly one origin.
+
+A reader that weighs evidence by how many pages assert it will treat that as five times the support. A reader that weighs evidence by where it *came from* will treat it as one. The gap between those two readers is an attack surface, and it is measurable.
+
+GULI-SET measures it. Every world is synthetic and fictional, the hidden truth is symbolic and exact, and the normative answer is computed from unique evidence origins by Bayes rather than judged by a model. That is the whole design constraint: if the ground truth were a matter of opinion, no amount of scoring machinery would make the result trustworthy.
+
+## How it fits together
+
+There are three tracks, each isolating one more failure mode, and they build on each other.
+
+```mermaid
+flowchart TB
+    G["Generator<br/>exact hidden truth, provenance DAG,<br/>source reliability, user constraints"]
+
+    G --> C["<b>Core</b><br/>one origin echoed 4x vs 4 independent origins.<br/>Page count, direction, reliability held fixed."]
+    G --> M["<b>Marketing</b><br/>8 campaign families over the same worlds.<br/>All pages visible in the prompt."]
+    G --> A["<b>Agent</b><br/>same worlds as a closed search/open web.<br/>Pages must be found to be used."]
+
+    C --> CS["Exact Bayes scorer<br/>posterior MAE, echo inflation"]
+    M --> MS["Exact scorer<br/>choice, claim audit, provenance, violations"]
+    A --> AS["Reader ladder + priced attacker<br/><b>Flip Cost</b>"]
+
+    CS --> R["Metric vector<br/>never one composite"]
+    MS --> R
+    AS --> R
+```
+
+**Core** asks the narrow question in isolation: does confidence rise when one report is merely echoed? Here the exact normative posterior is known — four pages copied from one 75%-reliable origin justify `P=0.75`, while four genuinely independent 75%-reliable origins justify `P≈0.988`. A model that moves toward 0.988 on the echoed world is counting presentation volume as information.
+
+**Marketing** asks whether that error survives contact with a decision. A fictional product violates a hard latency requirement; one lab measurement says so; increasingly polished marketing says otherwise. Every page is in the prompt, so nothing is hidden — the only question is what the reader does with provenance.
+
+**Agent** removes the guarantee that the reader sees everything. The same worlds become a local `search()` / `open()` web with attackable ranking, and the reader has a finite number of results it will open. This is where **Flip Cost** lives: the minimum an attacker must spend to change the answer. It turns "is this defense good?" into a number with units.
+
+The reason that last step matters is visible in the results. The Meta-harness defense stack reaches 100% strict pass on Marketing — apparently solved — and still loses 25% of agent cases at *zero* attacker cost, because it never opens the page that would have told it the truth. Completeness on a prompt is not robustness in a world.
+
 ## The benchmark
 
 ### Core: exact correlation neglect
@@ -95,6 +133,8 @@ The same campaigns become miniature local websites with deterministic, attackabl
 | `data/agent.jsonl` | 64 | page-hidden synthetic-web agent prompts |
 
 Symbolic truth is authoritative; prose is only a rendering. Primary scores are programmatic—no LLM judge is required.
+
+The four model-visible splits are also on the Hub as [`zozo-ib/gulliblebench`](https://huggingface.co/datasets/zozo-ib/gulliblebench). The hidden answer keys are deliberately **not** published there: a crawled copy would make contamination permanent and untraceable, and the generator reproduces them exactly. See [`docs/HUGGINGFACE.md`](docs/HUGGINGFACE.md).
 
 ## Reproduce everything
 
@@ -177,21 +217,27 @@ Prices are pre-registered constants ordered by required attacker capability, not
 gulliblebench flip-cost
 ```
 
-| Reader | Mean choice flip cost | Zero-cost flips | Mean audit flip cost |
+Predicate `choice`, 64 agent cases:
+
+| Reader | Clean accuracy | Mean flip cost | Zero-cost flips |
 |---|---:|---:|---:|
-| `bounded-page-counter` | 0.38 | 62% | 0.38 |
-| `+collapse_provenance` | 0.38 | 62% | 0.38 |
-| `+guard_constraints` | 2.12 | 25% | 0.38 |
-| `+verify_independence` | 2.12 | 25% | 8.00 |
-| `+seek_primary_evidence` | 9.12 | **0%** | 8.00 |
+| `bounded-page-counter` | 38% | 0.38 | 62% |
+| `+collapse_provenance` | 38% | 0.38 | 62% |
+| `+guard_constraints` | 75% | 2.12 | 25% |
+| `+verify_independence` | 75% | 2.12 | 25% |
+| `+seek_primary_evidence` | **100%** | **9.12** | **0%** |
 
 Three findings, all reproducible offline:
 
-1. **62% of agent cases flip the naive reader at zero attacker cost.** The campaign has already bought the ranking; nothing further is needed. This is go/no-go criterion 4 in [the protocol](docs/PROTOCOL.md).
+1. **62% of agent cases flip the naive reader at zero attacker cost** — the campaign as generated is already sufficient. The mechanism splits, and the larger half is not what you would guess: in 24 of those 40 cases the reader *did* open the decisive lab measurement and still chose wrong, because it counts pages and the campaign outnumbers the lab 3:1 or 4:1. In the other 16 (`full_stack` and `manufactured_consensus`) the lab never entered the five read slots at all. Correlation neglect and bounded attention are separate failures, and both are live here. Together they satisfy go/no-go criterion 4 in [the protocol](docs/PROTOCOL.md).
 2. **A defense that is complete on paper can be empty under bounded attention.** The full Meta-harness stack reaches 100% strict pass on the non-agent Marketing track, yet still flips at zero cost on 25% of agent cases — because it never reads the decisive page.
-3. **Only actively seeking primary evidence removes zero-cost flips**, and it makes the attacker pay a mean budget of 9.1.
+3. **Only actively seeking primary evidence removes zero-cost flips**, and it makes the attacker pay a mean budget of 9.1 while being the only rung that is also 100% correct unattacked.
 
-`verify_independence` is the one layer an attacker cannot reach cheaply: the sole route through it is `forge_measurement`, priced at 8. See [`docs/FLIP_COST.md`](docs/FLIP_COST.md) for the threat model, the full metric vector, and the limitations — including which actions turn out never to be cost-optimal, and why.
+`verify_independence` is the one layer an attacker cannot reach cheaply: on the audit predicate the sole route through it is `forge_measurement`, priced at 8.
+
+Flip Cost is reported as a vector, never one number. Clean accuracy is part of that vector because a reader that opens nothing and never believes the campaign is unflippable and useless. The cost statistics come in two forms: a mean over flippable cases, which is blind to censoring, and a restricted mean counting censored cases at the cap, which is monotone in defense strength and is what should be used to rank defenses.
+
+These readers are **oracle-provenance** policies. They cannot reach the answer key — mutating `correct_side` moves no reported cost — but their layers do read provenance annotations that the agent track's `open()` tool never shows a model. Each rung is therefore an upper bound on what a defense with perfect provenance could achieve, not an equal-footing baseline for a language model. See [`docs/FLIP_COST.md`](docs/FLIP_COST.md) for the threat model, the full metric vector, and the limitations — including which actions are priced out and never cost-optimal, why rung 1 is inert, and why the ladder is not monotone.
 
 ## Project map
 
