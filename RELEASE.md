@@ -31,3 +31,37 @@ Blind, fresh-context evaluation across multiple model families on neutral/direct
 ## GitHub demo layer (2026-08-27)
 
 The GULI-SET repository adds a tiny deterministic recipe, a zero-API Meta-harness demonstration, three regression tests, and GitHub-first documentation. This teaching layer does not alter the frozen v1.0 benchmark datasets or the reported calibration results.
+
+## Agent-track Flip Cost (2026-08-27)
+
+The last metric listed as planned in `README.md` and `paper/PROPOSAL.md` is now implemented.
+
+Flip Cost is the exact minimum attacker budget that flips a deterministic bounded-attention reader on the synthetic-web agent track. It measures a defense rather than a model, is computed by exhaustive search over a frozen price table, and requires no API key.
+
+### Added
+
+- `src/gulliblebench/flipcost.py`: typed attacker actions, the frozen price table, five pre-registered reader policies, and exact minimum-cost search
+- `gulliblebench flip-cost`, writing `results/flip-cost.json` and `results/FLIP_COST.md`
+- `docs/FLIP_COST.md`: threat model, price table, metric vector, and limitations
+- `examples/flip_cost_demo.py` and `figures/flip_cost_ladder.png`
+- 47 tests, including exact minimality verified against independent brute force, oracle-freedom of every reader, and immutability of product truth under attack
+- `scripts/export_huggingface.py` and `docs/HUGGINGFACE.md` for Hub publication, with answer keys withheld by default
+- CI now runs `flip-cost` and every example, lints `scripts` and `examples`, and asserts `git diff --exit-code -- data results`
+
+### Changed
+
+- `meta_harness`: the three `PolicyLayer` constants are public, and `solve_with_stack` accepts an optional base answer so one set of audited layer semantics serves both the Meta demo and the Flip Cost reader ladder. Demo output is byte-identical.
+
+### Flip Cost snapshot
+
+Predicate `choice`, 64 agent cases, budget cap 16:
+
+| Reader | Mean flip cost | Zero-cost flips |
+|---|---:|---:|
+| `bounded-page-counter` | 0.38 | 62% |
+| `+collapse_provenance` | 0.38 | 62% |
+| `+guard_constraints` | 2.12 | 25% |
+| `+verify_independence` | 2.12 | 25% |
+| `+seek_primary_evidence` | 9.12 | 0% |
+
+The frozen v1.0 datasets, calibration baselines, and reported results are unchanged; the reproducibility gate above proves it byte-for-byte.
