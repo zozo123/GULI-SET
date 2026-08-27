@@ -1,0 +1,31 @@
+# islo.yaml — GULI-SET / GullibleBench
+#
+# One command:        islo use
+# Reconnect later:    islo use guli-set
+#
+# Why this file exists: the benchmark itself needs nothing but Python 3.11 and runs
+# offline, but the Harbor agent track needs a working Docker daemon to build task
+# images. An islo sandbox provides one, which is useful when the local daemon does not.
+# See docs/HARBOR.md.
+
+sources:
+  - url: https://github.com/zozo123/GULI-SET
+
+workdir: GULI-SET
+
+# 2 vCPU is enough for the deterministic suite. The Harbor image build is the only
+# heavy step, and disk is what it actually wants.
+cpu: 2
+memory_mb: 4096
+disk_gb: 20
+
+setup_scripts:
+  - name: benchmark
+    script: |
+      python3 -m venv .venv
+      .venv/bin/pip install --quiet --upgrade pip
+      .venv/bin/pip install --quiet -e '.[dev]'
+      .venv/bin/ruff check src tests scripts examples
+      .venv/bin/pytest -q
+      .venv/bin/gulliblebench demo
+      .venv/bin/gulliblebench flip-cost

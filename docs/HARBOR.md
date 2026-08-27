@@ -349,3 +349,47 @@ diff -r /tmp/a /tmp/b
 The verifier reads no clock — CTRF timings are zero on purpose — so two runs of the same
 trial produce identical reports, and a diff between two job directories shows agent
 behaviour rather than timing noise.
+
+## When the local Docker daemon is not available
+
+Building task images needs a working daemon, and a machine without one (or without disk) cannot
+run this track at all. [islo](https://islo.dev) sandboxes carry their own, so `islo.yaml` in the
+repository root is configured for it:
+
+```bash
+islo use                       # clone, venv, ruff, pytest, demo, flip-cost
+islo use guli-set -- bash -lc 'docker version --format "{{.Server.Version}}"'
+```
+
+A sandbox from that file has 2 vCPU, 4 GB RAM, 20 GB disk and a Docker daemon, which is enough
+for a task image and a handful of trials. Run `islo doctor` to validate the config first.
+
+## What has and has not been exercised
+
+The Docker daemon was unreachable on the machine where this exporter was written
+(`docker version` returns an empty server section), so **no task has been run inside a real
+container**. Everything else was validated by remapping `/app` and `/logs` into a scratch
+directory and putting the generated `environment/guli-web` on `PATH`, which exercises the
+real generated wrapper, solution, and verifier files.
+
+| Check | Result |
+|---|---|
+| tasks Harbor's own `LocalDatasetConfig` discovers | 64 of 64, `README.md` and `manifest.json` correctly ignored |
+| tasks with internet enabled | none |
+| `TaskPaths.is_valid` | true |
+| reference solution, clean world | 64 of 64 reward 1 |
+| reference solution, `--attacker-plan "echo=6"` | 64 of 64 reward 1 |
+| reference solution, full plan at cost 23 | 64 of 64 reward 1 |
+| missing / empty / prose / wrong / off-by-two answer files | reward 0 each, with a message, no crash |
+| two exports with identical arguments | byte-identical |
+
+That the reference solution still scores 1 under a cost-23 attack is the intended behaviour,
+not a weak attack: it pages to `--limit 50`, so it sees the whole index. The attack is priced
+against *bounded* attention, which is what an agent under a token budget actually has. A real
+agent that stops at the first page is the measurement; the oracle is the proof that the task
+remains solvable.
+
+Unexercised, and therefore the first thing to check on a machine with a live daemon: the
+`python:3.11-slim-bookworm` base image, the `tmux` apt package, and the pinned
+`pip` / `setuptools` / `wheel` / `asciinema` wheels. Those are the only things fetched from a
+network, at build time only. A failure there is a stale pin, not a broken task.
