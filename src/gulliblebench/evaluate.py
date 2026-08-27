@@ -88,6 +88,43 @@ def summarize_marketing(
     )
 
 
+def flip_cost_ladder_results(
+    cases: tuple[MarketingCase, ...], *, max_budget: int = 16
+) -> dict[str, object]:
+    """Flip Cost for every reader-ladder rung and every flip predicate.
+
+    Kept in its own artifact rather than folded into
+    :func:`deterministic_baseline_results`, so the frozen v1.0 calibration numbers in
+    ``results/deterministic-baselines.json`` are untouched by the agent track.
+    """
+
+    # Imported lazily: flipcost -> meta_harness -> evaluate would otherwise be a cycle.
+    from .flipcost import ACTION_COSTS, READER_LADDER, FlipPredicate, summarize_flip_cost
+
+    return {
+        "max_budget": max_budget,
+        "action_costs": {action.value: cost for action, cost in ACTION_COSTS.items()},
+        "ladder": [
+            {
+                "reader": reader.name,
+                "read_limit": reader.read_limit,
+                "seeks_primary_evidence": reader.seek_primary,
+                "escalates_read_depth": reader.escalate,
+                "layers": [layer.name for layer in reader.stack],
+                "predicates": {
+                    predicate.value: asdict(
+                        summarize_flip_cost(
+                            cases, reader, predicate=predicate, max_budget=max_budget
+                        )
+                    )
+                    for predicate in FlipPredicate
+                },
+            }
+            for reader in READER_LADDER
+        ],
+    }
+
+
 def deterministic_baseline_results(
     core_cases: tuple[CoreCase, ...], marketing_cases: tuple[MarketingCase, ...]
 ) -> dict[str, dict[str, object]]:

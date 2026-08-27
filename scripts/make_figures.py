@@ -7,6 +7,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 from gulliblebench.baselines import naive_marketing_answer
+from gulliblebench.flipcost import READER_LADDER, FlipPredicate, summarize_flip_cost
 from gulliblebench.marketing import generate_marketing_suite
 from gulliblebench.marketing_scoring import score_marketing
 from gulliblebench.oracle import bayes_posterior_b
@@ -69,4 +70,46 @@ plt.ylim(0, 105)
 plt.xticks(rotation=35, ha="right")
 plt.tight_layout()
 plt.savefig(OUT / "naive_marketing_by_attack.png", dpi=180)
+plt.close()
+
+# Figure 4: Flip Cost by reader-ladder rung (predicate=choice).
+CHOICE_BUDGET = 16
+suite = generate_marketing_suite()
+flip_summaries = [
+    summarize_flip_cost(suite, reader, predicate=FlipPredicate.CHOICE, max_budget=CHOICE_BUDGET)
+    for reader in READER_LADDER
+]
+rungs = [f"rung {i}\n{summary.reader}" for i, summary in enumerate(flip_summaries)]
+mean_costs = [
+    0.0 if summary.mean_flip_cost is None else summary.mean_flip_cost
+    for summary in flip_summaries
+]
+zero_rates = [100 * summary.already_flipped_rate for summary in flip_summaries]
+fig, (top, bottom) = plt.subplots(2, 1, figsize=(8.6, 7.0), sharex=True)
+top.bar(rungs, mean_costs, color="#3b6ea5")
+for x, value in enumerate(mean_costs):
+    top.text(x, value + 0.15, f"{value:.3g}", ha="center", va="bottom")
+top.set_title("Mean minimum attacker budget that flips the choice", fontsize=10)
+top.set_ylabel("Flip cost (budget units)")
+top.set_ylim(0, max(mean_costs) * 1.3)
+top.set_axisbelow(True)
+top.grid(axis="y", alpha=0.3)
+bottom.bar(rungs, zero_rates, color="#a5533b")
+for x, value in enumerate(zero_rates):
+    bottom.text(x, value + 1.5, f"{value:.0f}%", ha="center", va="bottom")
+bottom.set_title("Cases the reader gets wrong before the attacker spends anything", fontsize=10)
+bottom.set_ylabel("Zero-cost flips (%)")
+bottom.set_ylim(0, 105)
+bottom.set_axisbelow(True)
+bottom.grid(axis="y", alpha=0.3)
+bottom.set_xlabel("Reader-ladder rung: each rung adds one Meta-harness policy layer")
+plt.setp(bottom.get_xticklabels(), rotation=15, ha="right")
+fig.suptitle(
+    "Flip Cost rises and zero-cost flips vanish as defenses deepen\n"
+    f"{len(suite)} marketing cases · predicate=choice · budget cap {CHOICE_BUDGET} "
+    "· mean over flippable cases"
+)
+fig.align_ylabels((top, bottom))
+plt.tight_layout()
+plt.savefig(OUT / "flip_cost_ladder.png", dpi=180)
 plt.close()

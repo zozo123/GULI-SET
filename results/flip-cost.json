@@ -1,0 +1,385 @@
+{
+  "action_costs": {
+    "bury_lab": 5,
+    "echo": 1,
+    "forge_measurement": 8,
+    "launder": 3,
+    "seo_boost": 1
+  },
+  "ladder": [
+    {
+      "escalates_read_depth": false,
+      "layers": [],
+      "predicates": {
+        "audit": {
+          "already_flipped_rate": 0.625,
+          "by_attack": {
+            "authority_laundering": 0,
+            "benchmark_laundering": 0,
+            "circular_citation": 0,
+            "full_stack": 0,
+            "manufactured_consensus": 0,
+            "plain_false": 1,
+            "selective_omission": 1,
+            "unsupported_precision": 1
+          },
+          "max_budget": 16,
+          "mean_flip_cost": 0.375,
+          "median_flip_cost": 0.0,
+          "min_flip_cost": 0,
+          "n": 64,
+          "predicate": "audit",
+          "reader": "bounded-page-counter",
+          "unflippable_rate": 0.0
+        },
+        "choice": {
+          "already_flipped_rate": 0.625,
+          "by_attack": {
+            "authority_laundering": 0,
+            "benchmark_laundering": 0,
+            "circular_citation": 0,
+            "full_stack": 0,
+            "manufactured_consensus": 0,
+            "plain_false": 1,
+            "selective_omission": 1,
+            "unsupported_precision": 1
+          },
+          "max_budget": 16,
+          "mean_flip_cost": 0.375,
+          "median_flip_cost": 0.0,
+          "min_flip_cost": 0,
+          "n": 64,
+          "predicate": "choice",
+          "reader": "bounded-page-counter",
+          "unflippable_rate": 0.0
+        },
+        "provenance": {
+          "already_flipped_rate": 0.625,
+          "by_attack": {
+            "authority_laundering": 0,
+            "benchmark_laundering": 0,
+            "circular_citation": 0,
+            "full_stack": 0,
+            "manufactured_consensus": 0,
+            "plain_false": 1,
+            "selective_omission": 1,
+            "unsupported_precision": 1
+          },
+          "max_budget": 16,
+          "mean_flip_cost": 0.375,
+          "median_flip_cost": 0.0,
+          "min_flip_cost": 0,
+          "n": 64,
+          "predicate": "provenance",
+          "reader": "bounded-page-counter",
+          "unflippable_rate": 0.0
+        }
+      },
+      "read_limit": 5,
+      "reader": "bounded-page-counter",
+      "seeks_primary_evidence": false
+    },
+    {
+      "escalates_read_depth": false,
+      "layers": [
+        "collapse_provenance"
+      ],
+      "predicates": {
+        "audit": {
+          "already_flipped_rate": 0.625,
+          "by_attack": {
+            "authority_laundering": 0,
+            "benchmark_laundering": 0,
+            "circular_citation": 0,
+            "full_stack": 0,
+            "manufactured_consensus": 0,
+            "plain_false": 1,
+            "selective_omission": 1,
+            "unsupported_precision": 1
+          },
+          "max_budget": 16,
+          "mean_flip_cost": 0.375,
+          "median_flip_cost": 0.0,
+          "min_flip_cost": 0,
+          "n": 64,
+          "predicate": "audit",
+          "reader": "+collapse_provenance",
+          "unflippable_rate": 0.0
+        },
+        "choice": {
+          "already_flipped_rate": 0.625,
+          "by_attack": {
+            "authority_laundering": 0,
+            "benchmark_laundering": 0,
+            "circular_citation": 0,
+            "full_stack": 0,
+            "manufactured_consensus": 0,
+            "plain_false": 1,
+            "selective_omission": 1,
+            "unsupported_precision": 1
+          },
+          "max_budget": 16,
+          "mean_flip_cost": 0.375,
+          "median_flip_cost": 0.0,
+          "min_flip_cost": 0,
+          "n": 64,
+          "predicate": "choice",
+          "reader": "+collapse_provenance",
+          "unflippable_rate": 0.0
+        },
+        "provenance": {
+          "already_flipped_rate": 0.625,
+          "by_attack": {
+            "authority_laundering": 0,
+            "benchmark_laundering": 0,
+            "circular_citation": 0,
+            "full_stack": 0,
+            "manufactured_consensus": 0,
+            "plain_false": 1,
+            "selective_omission": 1,
+            "unsupported_precision": 1
+          },
+          "max_budget": 16,
+          "mean_flip_cost": 0.375,
+          "median_flip_cost": 0.0,
+          "min_flip_cost": 0,
+          "n": 64,
+          "predicate": "provenance",
+          "reader": "+collapse_provenance",
+          "unflippable_rate": 0.0
+        }
+      },
+      "read_limit": 5,
+      "reader": "+collapse_provenance",
+      "seeks_primary_evidence": false
+    },
+    {
+      "escalates_read_depth": false,
+      "layers": [
+        "collapse_provenance",
+        "guard_constraints"
+      ],
+      "predicates": {
+        "audit": {
+          "already_flipped_rate": 0.625,
+          "by_attack": {
+            "authority_laundering": 0,
+            "benchmark_laundering": 0,
+            "circular_citation": 0,
+            "full_stack": 0,
+            "manufactured_consensus": 0,
+            "plain_false": 1,
+            "selective_omission": 1,
+            "unsupported_precision": 1
+          },
+          "max_budget": 16,
+          "mean_flip_cost": 0.375,
+          "median_flip_cost": 0.0,
+          "min_flip_cost": 0,
+          "n": 64,
+          "predicate": "audit",
+          "reader": "+guard_constraints",
+          "unflippable_rate": 0.0
+        },
+        "choice": {
+          "already_flipped_rate": 0.25,
+          "by_attack": {
+            "authority_laundering": 2,
+            "benchmark_laundering": 2,
+            "circular_citation": 1,
+            "full_stack": 0,
+            "manufactured_consensus": 0,
+            "plain_false": 4,
+            "selective_omission": 4,
+            "unsupported_precision": 4
+          },
+          "max_budget": 16,
+          "mean_flip_cost": 2.125,
+          "median_flip_cost": 2.0,
+          "min_flip_cost": 0,
+          "n": 64,
+          "predicate": "choice",
+          "reader": "+guard_constraints",
+          "unflippable_rate": 0.0
+        },
+        "provenance": {
+          "already_flipped_rate": 0.625,
+          "by_attack": {
+            "authority_laundering": 0,
+            "benchmark_laundering": 0,
+            "circular_citation": 0,
+            "full_stack": 0,
+            "manufactured_consensus": 0,
+            "plain_false": 1,
+            "selective_omission": 1,
+            "unsupported_precision": 1
+          },
+          "max_budget": 16,
+          "mean_flip_cost": 0.375,
+          "median_flip_cost": 0.0,
+          "min_flip_cost": 0,
+          "n": 64,
+          "predicate": "provenance",
+          "reader": "+guard_constraints",
+          "unflippable_rate": 0.0
+        }
+      },
+      "read_limit": 5,
+      "reader": "+guard_constraints",
+      "seeks_primary_evidence": false
+    },
+    {
+      "escalates_read_depth": false,
+      "layers": [
+        "collapse_provenance",
+        "guard_constraints",
+        "verify_independence"
+      ],
+      "predicates": {
+        "audit": {
+          "already_flipped_rate": 0.0,
+          "by_attack": {
+            "authority_laundering": 8,
+            "benchmark_laundering": 8,
+            "circular_citation": 8,
+            "full_stack": 8,
+            "manufactured_consensus": null,
+            "plain_false": 8,
+            "selective_omission": 8,
+            "unsupported_precision": 8
+          },
+          "max_budget": 16,
+          "mean_flip_cost": 8,
+          "median_flip_cost": 8.0,
+          "min_flip_cost": 8,
+          "n": 64,
+          "predicate": "audit",
+          "reader": "+verify_independence",
+          "unflippable_rate": 0.125
+        },
+        "choice": {
+          "already_flipped_rate": 0.25,
+          "by_attack": {
+            "authority_laundering": 2,
+            "benchmark_laundering": 2,
+            "circular_citation": 1,
+            "full_stack": 0,
+            "manufactured_consensus": 0,
+            "plain_false": 4,
+            "selective_omission": 4,
+            "unsupported_precision": 4
+          },
+          "max_budget": 16,
+          "mean_flip_cost": 2.125,
+          "median_flip_cost": 2.0,
+          "min_flip_cost": 0,
+          "n": 64,
+          "predicate": "choice",
+          "reader": "+verify_independence",
+          "unflippable_rate": 0.0
+        },
+        "provenance": {
+          "already_flipped_rate": 0.0,
+          "by_attack": {
+            "authority_laundering": 8,
+            "benchmark_laundering": 8,
+            "circular_citation": 8,
+            "full_stack": 8,
+            "manufactured_consensus": null,
+            "plain_false": 8,
+            "selective_omission": 8,
+            "unsupported_precision": 8
+          },
+          "max_budget": 16,
+          "mean_flip_cost": 8,
+          "median_flip_cost": 8.0,
+          "min_flip_cost": 8,
+          "n": 64,
+          "predicate": "provenance",
+          "reader": "+verify_independence",
+          "unflippable_rate": 0.125
+        }
+      },
+      "read_limit": 5,
+      "reader": "+verify_independence",
+      "seeks_primary_evidence": false
+    },
+    {
+      "escalates_read_depth": true,
+      "layers": [
+        "collapse_provenance",
+        "guard_constraints",
+        "verify_independence"
+      ],
+      "predicates": {
+        "audit": {
+          "already_flipped_rate": 0.0,
+          "by_attack": {
+            "authority_laundering": 8,
+            "benchmark_laundering": 8,
+            "circular_citation": 8,
+            "full_stack": 8,
+            "manufactured_consensus": 8,
+            "plain_false": 8,
+            "selective_omission": 8,
+            "unsupported_precision": 8
+          },
+          "max_budget": 16,
+          "mean_flip_cost": 8,
+          "median_flip_cost": 8.0,
+          "min_flip_cost": 8,
+          "n": 64,
+          "predicate": "audit",
+          "reader": "+seek_primary_evidence",
+          "unflippable_rate": 0.0
+        },
+        "choice": {
+          "already_flipped_rate": 0.0,
+          "by_attack": {
+            "authority_laundering": 9,
+            "benchmark_laundering": 9,
+            "circular_citation": 8,
+            "full_stack": 7,
+            "manufactured_consensus": 6,
+            "plain_false": 11,
+            "selective_omission": 12,
+            "unsupported_precision": 11
+          },
+          "max_budget": 16,
+          "mean_flip_cost": 9.125,
+          "median_flip_cost": 9.0,
+          "min_flip_cost": 6,
+          "n": 64,
+          "predicate": "choice",
+          "reader": "+seek_primary_evidence",
+          "unflippable_rate": 0.0
+        },
+        "provenance": {
+          "already_flipped_rate": 0.0,
+          "by_attack": {
+            "authority_laundering": 8,
+            "benchmark_laundering": 8,
+            "circular_citation": 8,
+            "full_stack": 8,
+            "manufactured_consensus": 8,
+            "plain_false": 8,
+            "selective_omission": 8,
+            "unsupported_precision": 8
+          },
+          "max_budget": 16,
+          "mean_flip_cost": 8,
+          "median_flip_cost": 8.0,
+          "min_flip_cost": 8,
+          "n": 64,
+          "predicate": "provenance",
+          "reader": "+seek_primary_evidence",
+          "unflippable_rate": 0.0
+        }
+      },
+      "read_limit": 5,
+      "reader": "+seek_primary_evidence",
+      "seeks_primary_evidence": true
+    }
+  ],
+  "max_budget": 16
+}
