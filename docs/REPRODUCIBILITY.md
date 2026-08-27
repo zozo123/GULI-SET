@@ -39,6 +39,12 @@ For publishable model results:
 - keep evaluation seeds/worlds private for a leaderboard release;
 - report formatting failures separately from epistemic failures.
 
+The response-file scorers enforce that policy mechanically. By default the submitted id set must
+equal the benchmark id set. Parse failures count as strict failures and are listed by id. An
+explicit `--allow-partial` exploration keeps missing cases in the top-level denominator and
+reports both submission and parsed coverage. Core additionally reports coverage of all 18
+matched echo/independent causal pairs.
+
 Inspect AI adapters are provided for Core, direct Marketing, synthetic-web Marketing Agent, and attacked Marketing Agent tasks. CI installs the `[inspect]` extra and asserts that all four tasks actually construct with the expected sample counts and metadata, so the adapters are instantiation-verified rather than only syntax-checked. A live provider run still requires model credentials.
 
 To measure empirical Flip Cost against a model, sweep the attacker budget:

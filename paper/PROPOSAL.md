@@ -12,7 +12,7 @@ Generate synthetic causal worlds with exact hidden truth, source reliability, pr
 
 - Bayesian posterior error
 - provenance reconstruction error
-- echo inflation
+- paired echo inflation, independence response, and normalized causal separation
 - downstream decision regret / hard-constraint violation
 - false-claim uptake
 - neutral-vs-defensive robustness gap

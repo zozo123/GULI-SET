@@ -185,6 +185,30 @@ For a machine-readable trace artifact:
 gulliblebench demo --json > meta-demo-run.json
 ```
 
+## Score response files without denominator drift
+
+`score-core` and `score-marketing` accept JSONL rows shaped as
+`{"id": "<case-id>", "answer": <model-output>}`. Scoring is fail-closed: unknown ids are
+rejected, duplicate ids are rejected, and an incomplete case set is rejected by default.
+Formatting failures remain in the denominator and are reported separately instead of being
+silently discarded.
+
+```bash
+gulliblebench score-core responses.jsonl
+gulliblebench score-marketing responses.jsonl
+```
+
+For an explicitly exploratory partial run, pass `--allow-partial`. Missing cases still score as
+failures in the top-level strict pass rate; metrics under `parsed_summary` are clearly conditional
+on parseable responses and include their coverage beside them.
+
+Core reports the actual paired causal estimand in addition to aggregate error. For each matched
+echo/independent cell above one page, it measures confidence change relative to the model's
+matched one-source response and the separation between independent evidence and echoes.
+`normalized_separation` is 1
+for the exact Bayesian oracle and 0 for the page-counting baseline. `pair_coverage` prevents a
+model from looking robust by omitting the harder side of a pair.
+
 To change the tiny experiment, copy `data/demo.json`, select any of the eight attack names, and pass it with `--data`.
 
 ## Run real models with Inspect AI

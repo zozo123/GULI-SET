@@ -28,10 +28,20 @@ def main() -> None:
     sub.add_parser("baselines", help="run deterministic oracle and gullible baselines")
     score_core = sub.add_parser("score-core", help="score a Core response JSONL file")
     score_core.add_argument("responses")
+    score_core.add_argument(
+        "--allow-partial",
+        action="store_true",
+        help="allow missing ids but count them as failures (default: reject incomplete files)",
+    )
     score_marketing = sub.add_parser(
         "score-marketing", help="score a Marketing response JSONL file"
     )
     score_marketing.add_argument("responses")
+    score_marketing.add_argument(
+        "--allow-partial",
+        action="store_true",
+        help="allow missing ids but count them as failures (default: reject incomplete files)",
+    )
     web = sub.add_parser(
         "web", help="query the closed synthetic web from a shell (for terminal agents)"
     )
@@ -82,11 +92,27 @@ def main() -> None:
             print(name, tracks)
     elif args.command == "score-core":
         core = generate_core_suite()
-        print(json.dumps(asdict(score_core_response_file(core, args.responses)), indent=2))
+        print(
+            json.dumps(
+                asdict(
+                    score_core_response_file(
+                        core, args.responses, allow_partial=args.allow_partial
+                    )
+                ),
+                indent=2,
+            )
+        )
     elif args.command == "score-marketing":
         marketing = generate_marketing_suite()
         print(
-            json.dumps(asdict(score_marketing_response_file(marketing, args.responses)), indent=2)
+            json.dumps(
+                asdict(
+                    score_marketing_response_file(
+                        marketing, args.responses, allow_partial=args.allow_partial
+                    )
+                ),
+                indent=2,
+            )
         )
     elif args.command == "web":
         print(

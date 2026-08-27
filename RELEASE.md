@@ -1,5 +1,12 @@
 # GullibleBench v1.0.0
 
+## Unreleased: scoring integrity
+
+Response-file scoring now rejects incomplete or unknown case sets by default, counts parse
+failures in the strict-pass denominator, and exposes coverage explicitly for opt-in partial runs.
+Core reports its matched causal separation rather than only aggregate error: the exact oracle is
+normalized to 1 and the page-count shortcut to 0 across all 18 nontrivial pairs.
+
 Release date: 2026-08-23
 
 ## Included

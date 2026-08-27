@@ -36,6 +36,13 @@ Two constraints on reading it. The pre-registered reader policies consume proven
 
 Never collapse the first paper to one arbitrary composite. Report the metric vector and strict pass rate. Report uncertainty clustered by base world when running stochastic epochs.
 
+For Core, the primary causal diagnostic is the matched separation between the independent and
+echo conditions at fixed page count, reliability, direction, and provenance mode. Echo inflation
+and independence response are changes from the model's matched one-source response. Report both,
+plus raw separation, normalized separation, and pair coverage.
+The normalized value is 1 for the exact oracle and 0 for a reader that reacts identically to
+independent evidence and duplicated pages.
+
 For model comparisons:
 
 - fresh session/context per sample or documented batching policy
@@ -44,6 +51,7 @@ For model comparisons:
 - model/provider/version/date recorded
 - formatting failures reported separately
 - hidden evaluation worlds rotated for leaderboard use
+- missing and malformed cases retained in the strict-pass denominator
 
 ## Go/no-go
 
