@@ -200,6 +200,25 @@ inspect eval src/gulliblebench/inspect_tasks.py@marketing_agent --model <provide
 
 Use fresh isolated sessions, hidden or rotating seeds, and repeated runs for publishable results. A model that has seen the hypothesis, defense, or targets is a sanity check—not a leaderboard entry.
 
+## Run real agents with Harbor
+
+[Harbor](https://www.harborframework.com/docs) is the Terminal-Bench team's harness for evaluating agents in containers. It measures something neither of the above does: an agent in a shell that chooses its own queries, its own read depth, and when to stop.
+
+```bash
+uv tool install harbor
+python scripts/export_harbor.py --limit 2 --force     # smoke run
+python scripts/export_harbor.py --force               # all 64 cases
+harbor run -p build/harbor -a oracle
+```
+
+Sweeping the attacker budget gives that agent's **empirical Flip Cost**:
+
+```bash
+python scripts/export_harbor.py --force --attacker-plan "echo=6"
+```
+
+Every task sets `allow_internet = false`, so the synthetic web is the only world the agent can see and a result is attributable to the pages the generator emitted. That also means container-installed agents cannot run these tasks — see [`docs/HARBOR.md`](docs/HARBOR.md) for which agents work, and for why an empirical Flip Cost is not a comparable rung of the deterministic ladder.
+
 ## Included calibration results
 
 | Baseline | Core strict pass | Core posterior MAE | Marketing strict pass | Hard-constraint violations |
@@ -271,11 +290,11 @@ These readers are **oracle-provenance** policies. They cannot reach the answer k
 src/gulliblebench/       generators, worlds, scorers, CLI, Meta harness, Flip Cost
 data/                    visible, hidden, agent, and tiny demo data
 tests/                   deterministic correctness and regression tests
-docs/                    protocol, threats, baselines, reproducibility, Flip Cost
+docs/                    protocol, threats, baselines, reproducibility, Flip Cost, harnesses
 results/                 calibration and clearly labeled sanity artifacts
 figures/                 checked-in reproducible plots
 examples/                minimal Python entry points
-scripts/                 figure generation and Hugging Face publication
+scripts/                 figures, Hugging Face publication, Harbor task generation
 paper/PROPOSAL.md        research question and minimum experiment
 ```
 
