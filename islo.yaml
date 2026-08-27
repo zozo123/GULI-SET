@@ -13,11 +13,12 @@ sources:
 
 workdir: GULI-SET
 
-# 2 vCPU is enough for the deterministic suite. The Harbor image build is the only
-# heavy step, and disk is what it actually wants.
+# Sized to the islo free tier, which caps disk_gb at 10. The deterministic suite needs
+# almost nothing; the Harbor image build is the only step that wants real disk, and one
+# task image plus a few trials fits well inside 10 GB.
 cpu: 2
-memory_mb: 4096
-disk_gb: 20
+memory_mb: 2048
+disk_gb: 10
 
 setup_scripts:
   - name: benchmark
