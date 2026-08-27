@@ -366,11 +366,29 @@ for a task image and a handful of trials. Run `islo doctor` to validate the conf
 
 ## What has and has not been exercised
 
-The Docker daemon was unreachable on the machine where this exporter was written
-(`docker version` returns an empty server section), so **no task has been run inside a real
-container**. Everything else was validated by remapping `/app` and `/logs` into a scratch
-directory and putting the generated `environment/guli-web` on `PATH`, which exercises the
-real generated wrapper, solution, and verifier files.
+Tasks have been run end to end in real Docker containers. `harbor run -a oracle` builds the
+image, runs the task's own `solution/solve.sh` inside it, and runs the verifier:
+
+| Run | Result |
+|---|---|
+| `harbor run -p build/harbor -a oracle` | 1 trial, 0 errors, **mean 1.000**, `reward = 1.0` in 21 s |
+| verifier checks inside that container | 7 of 7 passed, recorded in `/logs/verifier/ctrf.json` |
+| `harbor run -p build/harbor -a nop` | 1 trial, 0 errors, **mean 0.000**, `reward = 0.0` |
+| the same, on a `--attacker-plan "echo=6"` task | 1 trial, 0 errors, **mean 1.000**, `reward = 1.0` |
+
+The `nop` result is the half that matters as much as the pass: an agent that does nothing
+scores zero, so a reward of 1 is evidence the task was solved rather than evidence the
+verifier is permissive.
+
+One bug was found this way and could only have been found this way. Harbor builds the task
+image as `hb__<task name>`, and Docker rejects an uppercase character in a repository name,
+so a task named `guli-00-plain_false-B-clean` failed with `invalid reference format` before
+any trial ran. Harbor lowercases its compose *project* name but not the image name. Task
+names are now lowercased and `check_task` refuses a non-lowercase name at export time.
+
+The wider matrix was validated by remapping `/app` and `/logs` into a scratch directory and
+putting the generated `environment/guli-web` on `PATH`, which exercises the real generated
+wrapper, solution, and verifier files without needing 64 image builds.
 
 | Check | Result |
 |---|---|

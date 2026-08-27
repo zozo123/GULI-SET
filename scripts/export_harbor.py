@@ -219,10 +219,16 @@ def task_name(case: MarketingCase, budget: AttackerBudget) -> str:
     verbatim because Harbor truncates it to :data:`TASK_NAME_TRIAL_PREFIX` characters when
     it names a trial directory. ``metadata.case_id`` and ``manifest.json`` remain the
     authoritative mapping.
+
+    Lowercased, and not cosmetically. Harbor builds the task image as ``hb__<task name>``,
+    and Docker rejects a repository name containing an uppercase character, so a task whose
+    name carried the side letter as ``B`` failed with "invalid reference format" before any
+    trial ran. Harbor lowercases its compose *project* name but not the image name, so the
+    constraint lands here. :func:`check_task` enforces it.
     """
 
     short = case.id.removeprefix("marketing-").replace("-target", "-")
-    return f"{TASK_NAME_PREFIX}-{short}-{budget.slug}"
+    return f"{TASK_NAME_PREFIX}-{short}-{budget.slug}".lower()
 
 
 def render_instruction(case: MarketingCase) -> str:
@@ -1035,6 +1041,15 @@ def check_task(task: GeneratedTask, case: MarketingCase, budget: AttackerBudget)
     """
 
     from gulliblebench.marketing import render_agent_prompt
+
+    # Harbor builds the image as hb__<task name>, and Docker rejects an uppercase
+    # repository name. A task that violates this fails at image build with "invalid
+    # reference format", before any trial runs, so it is checked at export time.
+    if task.name != task.name.lower():
+        raise ValueError(
+            f"{task.name}: task name must be lowercase, because Harbor builds the image as "
+            f"hb__{task.name} and Docker rejects an uppercase repository name"
+        )
 
     for relative in REQUIRED_TASK_FILES:
         path = task.path / relative
