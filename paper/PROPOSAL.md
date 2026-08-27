@@ -16,7 +16,7 @@ Generate synthetic causal worlds with exact hidden truth, source reliability, pr
 - downstream decision regret / hard-constraint violation
 - false-claim uptake
 - neutral-vs-defensive robustness gap
-- later: attacker Flip Cost in the synthetic-web agent track
+- attacker Flip Cost in the synthetic-web agent track (implemented; see docs/FLIP_COST.md)
 
 ## Main claim to test
 

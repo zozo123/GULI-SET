@@ -14,8 +14,26 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: python -m pip install -e '.[dev]'
-      - run: ruff check src tests
+      - run: ruff check src tests scripts examples
       - run: pytest
       - run: gulliblebench demo
       - run: gulliblebench generate-all
       - run: gulliblebench baselines
+      - run: gulliblebench flip-cost
+      - run: python examples/first_pair.py
+      - run: python examples/synthetic_web_demo.py
+      - run: python examples/meta_harness_demo.py
+      - run: python examples/flip_cost_demo.py
+      - name: frozen datasets and results must be byte-reproducible
+        run: git diff --exit-code -- data results
+
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e '.[dev,inspect]'
+      - name: Inspect AI adapters must construct, not merely parse
+        run: pytest tests/test_inspect_tasks.py -q

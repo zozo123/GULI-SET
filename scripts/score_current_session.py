@@ -1,5 +1,6 @@
 import json
 from dataclasses import asdict
+
 from gulliblebench.dataset import generate_core_suite
 from gulliblebench.evaluate import summarize_core, summarize_marketing
 from gulliblebench.marketing import generate_marketing_suite

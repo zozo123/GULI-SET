@@ -60,17 +60,17 @@ class MetaDemoRun:
     convergence_reason: str
 
 
-_PROVENANCE_LAYER = PolicyLayer(
+PROVENANCE_LAYER = PolicyLayer(
     name="collapse_provenance",
     role="compression",
     rationale="Repeated pages with one root claim are one evidence unit.",
 )
-_CONSTRAINT_LAYER = PolicyLayer(
+CONSTRAINT_LAYER = PolicyLayer(
     name="guard_constraints",
     role="routing",
     rationale="Route the decision through measured hard requirements before popularity.",
 )
-_INDEPENDENCE_LAYER = PolicyLayer(
+INDEPENDENCE_LAYER = PolicyLayer(
     name="verify_independence",
     role="verification",
     rationale="Accept support only when an independent measurement backs the campaign claim.",
@@ -89,14 +89,14 @@ class FrozenOmega:
     ) -> PolicyLayer | None:
         latest = history[-1].summary
         installed = {layer.name for layer in stack}
-        if latest.provenance_mae > 1.0 and _PROVENANCE_LAYER.name not in installed:
-            return _PROVENANCE_LAYER
-        if latest.hard_constraint_violation_rate > 0.0 and _CONSTRAINT_LAYER.name not in installed:
-            return _CONSTRAINT_LAYER
+        if latest.provenance_mae > 1.0 and PROVENANCE_LAYER.name not in installed:
+            return PROVENANCE_LAYER
+        if latest.hard_constraint_violation_rate > 0.0 and CONSTRAINT_LAYER.name not in installed:
+            return CONSTRAINT_LAYER
         if (
             latest.claim_audit_accuracy < 1.0 or latest.provenance_mae > 0.0
-        ) and _INDEPENDENCE_LAYER.name not in installed:
-            return _INDEPENDENCE_LAYER
+        ) and INDEPENDENCE_LAYER.name not in installed:
+            return INDEPENDENCE_LAYER
         return None
 
 
@@ -125,37 +125,60 @@ def load_demo_cases(path: str | Path | None = None) -> tuple[MarketingCase, ...]
 
 
 def _measured_safe_choice(case: MarketingCase) -> Side | None:
-    """Choose from measurements rendered in the visible pages, not hidden target labels."""
+    """Choose from measurements rendered in the visible pages, not hidden target labels.
 
-    measured_latency: dict[str, int] = {}
+    Contradictory measurements for one product are treated as *unresolved*, exactly like
+    an absent measurement. Resolving them by page order would make the verdict depend on
+    which page happened to be read last, so a forged measurement that disagrees with the
+    lab could be believed purely because it ranked higher. Under a fabricated primary
+    measurement this reader declines to conclude rather than trusting the newest number.
+    """
+
+    measured_latency: dict[str, set[int]] = {}
     for page in case.pages:
         for product_name, latency in _LATENCY_MEASUREMENT.findall(page.text):
-            measured_latency[product_name] = int(latency)
+            measured_latency.setdefault(product_name, set()).add(int(latency))
+
+    def resolved_latency(name: str) -> int:
+        values = measured_latency.get(name, set())
+        if len(values) != 1:
+            return case.requirement_latency_ms + 1
+        return next(iter(values))
+
     safe = [
         product.side
         for product in case.products
-        if measured_latency.get(product.name, case.requirement_latency_ms + 1)
-        <= case.requirement_latency_ms
+        if resolved_latency(product.name) <= case.requirement_latency_ms
         and product.monthly_usd <= case.requirement_budget_usd
         and product.encrypted
     ]
     return safe[0] if len(safe) == 1 else None
 
 
-def solve_with_stack(case: MarketingCase, stack: tuple[PolicyLayer, ...]) -> MarketingAnswer:
-    """Run the deliberately gullible base solver through every installed layer."""
+def solve_with_stack(
+    case: MarketingCase,
+    stack: tuple[PolicyLayer, ...],
+    *,
+    base: MarketingAnswer | None = None,
+) -> MarketingAnswer:
+    """Run a base solver through every installed layer.
 
-    answer = naive_marketing_answer(case)
+    ``base`` defaults to the deliberately gullible page counter used by the Meta demo.
+    The Flip Cost reader ladder passes its own bounded-attention base instead, so the
+    same audited layer semantics serve both tracks.
+    """
+
+    answer = naive_marketing_answer(case) if base is None else base
     for layer in stack:
-        if layer.name == _PROVENANCE_LAYER.name:
+        if layer.name == PROVENANCE_LAYER.name:
             if answer.campaign_claim_supported:
                 roots = {page.root_origin for page in case.pages if page.supports_campaign_claim}
                 answer = replace(answer, independent_supporting_origins=len(roots))
-        elif layer.name == _CONSTRAINT_LAYER.name:
+        elif layer.name == CONSTRAINT_LAYER.name:
             safe_choice = _measured_safe_choice(case)
             if safe_choice is not None:
                 answer = replace(answer, choice=safe_choice)
-        elif layer.name == _INDEPENDENCE_LAYER.name:
+        elif layer.name == INDEPENDENCE_LAYER.name:
             roots = {
                 page.root_origin
                 for page in case.pages
