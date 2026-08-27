@@ -164,14 +164,15 @@ finding (a).
 
 ## What is reported, and when each statistic is valid
 
-No single summary of a censored cost distribution is safe on its own, so four are reported.
+No single summary of a censored cost distribution is safe on its own, so five are reported.
 
 | Statistic | Definition | Use it for |
 |---|---|---|
-| `clean_accuracy` | unattacked correctness on this predicate | is the reader *useful* at all |
+| `primary_evidence_read_rate` | share of unattacked cases where the reader opened a genuine independent measurement | **is the defense real at all** |
 | `flip_rate_by_budget` | fraction flippable at each budget 0..cap | primary reporting |
 | `restricted_mean_flip_cost` | censored cases counted at the cap | **ranking defenses** |
 | `mean_flip_cost` | mean over flippable cases only | one column, read with `unflippable_rate` |
+| `clean_accuracy` | unattacked correctness on this predicate | convenience; exactly `1 - already_flipped_rate` |
 
 `flip_rate_by_budget` is the honest primary form. Every value is a fraction of all 64 cases at a
 budget at or below the cap, so nothing is imputed and nothing is conditioned away.
@@ -210,17 +211,38 @@ by any plan, at any price, under any predicate. Measured against the 654-plan sp
 `max_budget=16` it is flippable on 0 of 64 cases on all three predicates. Its Flip Cost is the best
 possible and it has read nothing.
 
-That is why `clean_accuracy` is part of `FlipCostSummary` rather than a footnote. A high Flip Cost
-is only a claim about a defense if the defense also answers correctly when unattacked.
+`clean_accuracy` is reported for this reason, but on its own it does **not** close the hole, and it
+is worth being precise about why.
 
-On this suite, however, clean accuracy is **necessary but not sufficient**. The degenerate reader
-above scores `clean_accuracy` 1.00 on all three predicates, and 64 of 64 on the real scorer's
-choice accuracy, because the correct answer is constant across the whole suite: `correct_side`
-equals `target_side` in 0 of the 64 cases. Clean accuracy on GULI-SET marketing cases cannot
-distinguish a reader that weighs evidence from one that has memorised the label distribution.
-Separating those needs a control condition whose label is not constant, which the v1 marketing
-generator does not emit. Until it does, treat clean accuracy as a necessary sanity floor, not a
-certificate of usefulness.
+First, it carries no information beyond `already_flipped_rate`. `flip_cost` evaluates the empty plan
+before any other, so "wrong at zero cost" and "wrong when unattacked" are the same event by
+construction, and `clean_accuracy == 1 - already_flipped_rate` in all 15 cells of the results
+tables below. It is kept because it names the quantity a reader of the table is looking for.
+
+Second, and more seriously, the degenerate reader above scores `clean_accuracy` 1.00 on all three
+predicates, and 64 of 64 on the real scorer's choice accuracy. The correct answer is constant across
+the whole suite: `correct_side` equals `target_side` in 0 of the 64 cases, so "never believe the
+promoted product" is always right. Clean accuracy cannot distinguish a reader that weighs evidence
+from one that has memorised the label distribution. Fixing *that* needs a control condition whose
+label is not constant — a truthful campaign, where the promoted product genuinely satisfies the
+requirement — which the v1 marketing generator does not emit. That is the single most valuable
+addition a v2 generator could make.
+
+What does separate them today is `primary_evidence_read_rate`: the share of unattacked cases in
+which the reader opened a genuine independent measurement. It is the only statistic in
+`FlipCostSummary` that is not a function of the flip predicate, and it is what a reviewer should
+look at first.
+
+| Reader | `audit` clean | `audit` unflippable | Grounded |
+|---|---:|---:|---:|
+| `bounded-page-counter` | 38% | 0% | 75% |
+| `+verify_independence` | 100% | 12% | 75% |
+| `+seek_primary_evidence` | 100% | 0% | **100%** |
+| degenerate, `read_limit=1`, full stack | 100% | 62% | **0%** |
+
+The degenerate reader looks like the strongest defense in the table on cost alone, and is exposed
+immediately by the last column. A high Flip Cost is a claim about a defense only when it comes with
+a high grounding rate; interpret the two together, always.
 
 ## Results
 

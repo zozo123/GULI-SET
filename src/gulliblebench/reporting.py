@@ -105,8 +105,8 @@ def render_flip_cost_ladder(results: dict[str, object], *, predicate: str | None
         "GULI-SET // FLIP COST",
         f"{n} agent cases · budget cap {results['max_budget']} · exact · zero API keys",
         "",
-        "predicate    reader                   clean    mean  restr  min  zero-cost  unflippable",
-        "-----------  ----------------------  ------  ------  -----  ---  ---------  -----------",
+        "predicate    reader                   clean  grnd    mean  restr  min   zero  unflip",
+        "-----------  ----------------------  ------  ----  ------  -----  ---  -----  ------",
     ]
     for name in predicates:
         for rung in ladder:
@@ -116,21 +116,24 @@ def render_flip_cost_ladder(results: dict[str, object], *, predicate: str | None
             lines.append(
                 f"{name:<11}  {rung['reader']:<22}  "
                 f"{summary['clean_accuracy']:>6.0%}  "
+                f"{summary['primary_evidence_read_rate']:>4.0%}  "
                 f"{'n/a' if mean_cost is None else f'{mean_cost:.2f}':>6}  "
                 f"{summary['restricted_mean_flip_cost']:>5.2f}  "
                 f"{'n/a' if minimum is None else minimum:>3}  "
-                f"{summary['already_flipped_rate']:>9.0%}  "
-                f"{summary['unflippable_rate']:>11.0%}"
+                f"{summary['already_flipped_rate']:>5.0%}  "
+                f"{summary['unflippable_rate']:>6.0%}"
             )
         lines.append("")
     lines.extend(
         (
-            "clean = unattacked accuracy. A high flip cost means nothing without it: a reader",
-            "        that opens nothing and never believes the campaign is unflippable and useless.",
-            "mean  = over flippable cases only, so it is blind to censoring. Never read it alone.",
-            "restr = censored cases counted at the cap. Monotone, so use this to rank defenses.",
-            "zero-cost = reader already wrong before the attacker spends anything",
-            "unflippable = no plan within the cap flipped it, not a proof of safety",
+            "clean  = unattacked accuracy. Exactly 1 - zero, by construction, not independent.",
+            "grnd   = share of unattacked cases where the reader opened a genuine primary",
+            "         measurement. This is the guard against a useless defense: a reader with",
+            "         read_limit=1 scores clean 100% and unflip 62% on audit while grounding 0%.",
+            "mean   = over flippable cases only, so it is blind to censoring. Never read alone.",
+            "restr  = censored cases counted at the cap. Monotone, so rank defenses by this.",
+            "zero   = reader already wrong before the attacker spends anything",
+            "unflip = no plan within the cap flipped it, not a proof of safety",
         )
     )
     return "\n".join(lines)
@@ -157,12 +160,18 @@ def write_flip_cost_markdown(results: dict[str, object], path: str | Path) -> No
         "`unflippable` means no plan within the cap flipped the reader, never that the reader is",
         "provably unflippable.",
         "",
-        "Read the three cost statistics together. `Mean` conditions on flippable cases and is",
-        "therefore blind to censoring: a defense that turns censored cases into cheap flips has",
-        "become strictly worse without moving it. `Restricted` counts censored cases at the cap and",
-        "is monotone in defense strength, so it is the statistic to rank defenses by. `Clean` is",
-        "unattacked accuracy, and without it a high flip cost is meaningless: a reader that opens",
-        "nothing and never believes the campaign is unflippable and useless.",
+        "Read the cost statistics together. `Mean` conditions on flippable cases and is therefore",
+        "blind to censoring: a defense that turns censored cases into cheap flips has become",
+        "strictly worse without moving it. `Restricted` counts censored cases at the cap and is",
+        "monotone in defense strength, so it is the statistic to rank defenses by.",
+        "",
+        "`Clean accuracy` is unattacked correctness, and is exactly `1 - zero-cost flips` by",
+        "construction rather than an independent axis. The real guard against a useless defense is",
+        "`Grounded`: the share of unattacked cases in which the reader actually opened a genuine",
+        "primary measurement. A reader with `read_limit=1` and the full layer stack scores 100%",
+        "clean and 62% unflippable on the audit predicate while grounding 0% of the time, because",
+        "the correct audit answer here is always \"not supported\" and a reader that never believes",
+        "any campaign is right for free. High Flip Cost is only credible with high grounding.",
         "",
     ]
     predicates = list(ladder[0]["predicates"]) if ladder else []
@@ -171,9 +180,9 @@ def write_flip_cost_markdown(results: dict[str, object], path: str | Path) -> No
             (
                 f"## Predicate: {predicate}",
                 "",
-                "| Reader | Layers | Clean accuracy | Mean | Restricted mean | Min | "
+                "| Reader | Layers | Clean accuracy | Grounded | Mean | Restricted mean | Min | "
                 "Zero-cost flips | Unflippable |",
-                "|---|---|---:|---:|---:|---:|---:|---:|",
+                "|---|---|---:|---:|---:|---:|---:|---:|---:|",
             )
         )
         for rung in ladder:
@@ -184,6 +193,7 @@ def write_flip_cost_markdown(results: dict[str, object], path: str | Path) -> No
             lines.append(
                 f"| `{rung['reader']}` | {layers} | "
                 f"{100 * summary['clean_accuracy']:.1f}% | "
+                f"{100 * summary['primary_evidence_read_rate']:.1f}% | "
                 f"{'n/a' if mean_cost is None else f'{mean_cost:.3f}'} | "
                 f"{summary['restricted_mean_flip_cost']:.3f} | "
                 f"{'n/a' if minimum is None else minimum} | "

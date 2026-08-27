@@ -58,13 +58,13 @@ Flip Cost is the exact minimum attacker budget that flips a deterministic bounde
 
 Predicate `choice`, 64 agent cases, budget cap 16:
 
-| Reader | Clean accuracy | Mean flip cost | Zero-cost flips |
-|---|---:|---:|---:|
-| `bounded-page-counter` | 38% | 0.38 | 62% |
-| `+collapse_provenance` | 38% | 0.38 | 62% |
-| `+guard_constraints` | 75% | 2.12 | 25% |
-| `+verify_independence` | 75% | 2.12 | 25% |
-| `+seek_primary_evidence` | 100% | 9.12 | 0% |
+| Reader | Clean accuracy | Grounded | Mean flip cost | Zero-cost flips |
+|---|---:|---:|---:|---:|
+| `bounded-page-counter` | 38% | 75% | 0.38 | 62% |
+| `+collapse_provenance` | 38% | 75% | 0.38 | 62% |
+| `+guard_constraints` | 75% | 75% | 2.12 | 25% |
+| `+verify_independence` | 75% | 75% | 2.12 | 25% |
+| `+seek_primary_evidence` | 100% | 100% | 9.12 | 0% |
 
 ### Known limits, stated up front
 
@@ -73,5 +73,8 @@ Predicate `choice`, 64 agent cases, budget cap 16:
 - The ladder is not monotone: rung 5 is strictly easier to attack than rung 4 on the audit predicate, because reading more exposes it to a forged measurement.
 - `launder` and `bury_lab` are priced out under this table and never appear in a minimal plan.
 - An unflippable result means "not flippable within the budget cap", never "provably safe".
+- `clean_accuracy` is exactly `1 - already_flipped_rate` by construction, so it is not a second
+  axis. `primary_evidence_read_rate` is the statistic that actually detects a useless defense: a
+  reader with `read_limit=1` scores 100% clean and 62% unflippable on `audit` while grounding 0%.
 
 The frozen v1.0 datasets, calibration baselines, and reported results are unchanged; the reproducibility gate above proves it byte-for-byte.

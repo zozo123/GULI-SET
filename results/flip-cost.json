@@ -49,6 +49,7 @@
           "min_flip_cost": 0,
           "n": 64,
           "predicate": "audit",
+          "primary_evidence_read_rate": 0.75,
           "reader": "bounded-page-counter",
           "restricted_mean_flip_cost": 0.375,
           "unflippable_rate": 0.0
@@ -91,6 +92,7 @@
           "min_flip_cost": 0,
           "n": 64,
           "predicate": "choice",
+          "primary_evidence_read_rate": 0.75,
           "reader": "bounded-page-counter",
           "restricted_mean_flip_cost": 0.375,
           "unflippable_rate": 0.0
@@ -133,6 +135,7 @@
           "min_flip_cost": 0,
           "n": 64,
           "predicate": "provenance",
+          "primary_evidence_read_rate": 0.75,
           "reader": "bounded-page-counter",
           "restricted_mean_flip_cost": 0.375,
           "unflippable_rate": 0.0
@@ -186,6 +189,7 @@
           "min_flip_cost": 0,
           "n": 64,
           "predicate": "audit",
+          "primary_evidence_read_rate": 0.75,
           "reader": "+collapse_provenance",
           "restricted_mean_flip_cost": 0.375,
           "unflippable_rate": 0.0
@@ -228,6 +232,7 @@
           "min_flip_cost": 0,
           "n": 64,
           "predicate": "choice",
+          "primary_evidence_read_rate": 0.75,
           "reader": "+collapse_provenance",
           "restricted_mean_flip_cost": 0.375,
           "unflippable_rate": 0.0
@@ -270,6 +275,7 @@
           "min_flip_cost": 0,
           "n": 64,
           "predicate": "provenance",
+          "primary_evidence_read_rate": 0.75,
           "reader": "+collapse_provenance",
           "restricted_mean_flip_cost": 0.375,
           "unflippable_rate": 0.0
@@ -324,6 +330,7 @@
           "min_flip_cost": 0,
           "n": 64,
           "predicate": "audit",
+          "primary_evidence_read_rate": 0.75,
           "reader": "+guard_constraints",
           "restricted_mean_flip_cost": 0.375,
           "unflippable_rate": 0.0
@@ -366,6 +373,7 @@
           "min_flip_cost": 0,
           "n": 64,
           "predicate": "choice",
+          "primary_evidence_read_rate": 0.75,
           "reader": "+guard_constraints",
           "restricted_mean_flip_cost": 2.125,
           "unflippable_rate": 0.0
@@ -408,6 +416,7 @@
           "min_flip_cost": 0,
           "n": 64,
           "predicate": "provenance",
+          "primary_evidence_read_rate": 0.75,
           "reader": "+guard_constraints",
           "restricted_mean_flip_cost": 0.375,
           "unflippable_rate": 0.0
@@ -463,6 +472,7 @@
           "min_flip_cost": 8,
           "n": 64,
           "predicate": "audit",
+          "primary_evidence_read_rate": 0.75,
           "reader": "+verify_independence",
           "restricted_mean_flip_cost": 9,
           "unflippable_rate": 0.125
@@ -505,6 +515,7 @@
           "min_flip_cost": 0,
           "n": 64,
           "predicate": "choice",
+          "primary_evidence_read_rate": 0.75,
           "reader": "+verify_independence",
           "restricted_mean_flip_cost": 2.125,
           "unflippable_rate": 0.0
@@ -547,6 +558,7 @@
           "min_flip_cost": 8,
           "n": 64,
           "predicate": "provenance",
+          "primary_evidence_read_rate": 0.75,
           "reader": "+verify_independence",
           "restricted_mean_flip_cost": 9,
           "unflippable_rate": 0.125
@@ -602,6 +614,7 @@
           "min_flip_cost": 8,
           "n": 64,
           "predicate": "audit",
+          "primary_evidence_read_rate": 1.0,
           "reader": "+seek_primary_evidence",
           "restricted_mean_flip_cost": 8,
           "unflippable_rate": 0.0
@@ -644,6 +657,7 @@
           "min_flip_cost": 6,
           "n": 64,
           "predicate": "choice",
+          "primary_evidence_read_rate": 1.0,
           "reader": "+seek_primary_evidence",
           "restricted_mean_flip_cost": 9.125,
           "unflippable_rate": 0.0
@@ -686,6 +700,7 @@
           "min_flip_cost": 8,
           "n": 64,
           "predicate": "provenance",
+          "primary_evidence_read_rate": 1.0,
           "reader": "+seek_primary_evidence",
           "restricted_mean_flip_cost": 8,
           "unflippable_rate": 0.0

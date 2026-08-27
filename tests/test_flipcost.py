@@ -1217,3 +1217,80 @@ def test_demo_run_pins_every_depth_of_the_ladder() -> None:
         assert summary["hard_constraint_violation_rate"] == hcv
         assert summary["strict_pass_rate"] == strict
         assert snapshot["omega_context_items"] == omega
+
+
+# --- 18. grounding: the guard against a defense that reads nothing ----------------
+
+
+#: Measured share of unattacked cases in which each rung opens a genuine primary
+#: measurement. Not a function of the flip predicate.
+PINNED_GROUNDED = (0.75, 0.75, 0.75, 0.75, 1.0)
+
+
+@pytest.mark.parametrize("predicate", list(FlipPredicate))
+def test_primary_evidence_read_rate_is_pinned_and_predicate_independent(
+    predicate: FlipPredicate,
+) -> None:
+    cases = generate_marketing_suite()
+    measured = tuple(
+        summarize_flip_cost(
+            cases, reader, predicate=predicate, max_budget=LADDER_BUDGET
+        ).primary_evidence_read_rate
+        for reader in READER_LADDER
+    )
+    assert measured == PINNED_GROUNDED
+
+
+def test_grounding_unmasks_a_reader_that_is_unflippable_because_it_reads_nothing() -> None:
+    """The hole `clean_accuracy` cannot close.
+
+    A reader with ``read_limit=1`` and the full layer stack looks like the strongest
+    defense in the table on cost alone: perfect unattacked accuracy and a majority of
+    cases not flippable at all. It earns that for free, because the correct audit answer
+    on this suite is always "the campaign claim is not supported". Grounding is what
+    exposes it.
+    """
+
+    cases = generate_marketing_suite()
+    degenerate = ReaderPolicy(
+        name="degenerate",
+        stack=(PROVENANCE_LAYER, CONSTRAINT_LAYER, INDEPENDENCE_LAYER),
+        read_limit=1,
+    )
+    degen = summarize_flip_cost(cases, degenerate, predicate=FlipPredicate.AUDIT, max_budget=8)
+    real = summarize_flip_cost(cases, TOP_RUNG, predicate=FlipPredicate.AUDIT, max_budget=8)
+
+    # It really does look better than the genuine defense on the cost statistics.
+    assert degen.clean_accuracy == real.clean_accuracy == 1.0
+    assert degen.unflippable_rate > real.unflippable_rate
+
+    # And grounding gives it away.
+    assert degen.primary_evidence_read_rate == 0.0
+    assert real.primary_evidence_read_rate == 1.0
+
+
+def test_clean_accuracy_carries_no_information_beyond_the_zero_cost_rate() -> None:
+    """Pinned so the docs' claim of exact redundancy cannot silently become false."""
+
+    cases = generate_marketing_suite()
+    for predicate in FlipPredicate:
+        for reader in READER_LADDER:
+            summary = summarize_flip_cost(
+                cases, reader, predicate=predicate, max_budget=LADDER_BUDGET
+            )
+            assert summary.clean_accuracy == pytest.approx(1.0 - summary.already_flipped_rate)
+
+
+def test_grounding_ignores_the_attackers_own_forged_measurement() -> None:
+    """A purchased forgery must never count as having read primary evidence."""
+
+    case = make_marketing_case(0, MarketingAttack.PLAIN_FALSE, target_side=Side.B)
+    forged_only = apply_plan(case, AttackerPlan(forge_measurement=1))
+    read = TOP_RUNG.read(forged_only)
+    assert any(page.id.startswith(ATTACKER_PAGE_PREFIX) for page in read)
+    genuine = [
+        page
+        for page in read
+        if page.independent_measurement and not page.id.startswith(ATTACKER_PAGE_PREFIX)
+    ]
+    assert len(genuine) == 1
