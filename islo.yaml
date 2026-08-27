@@ -7,6 +7,13 @@
 # offline, but the Harbor agent track needs a working Docker daemon to build task
 # images. An islo sandbox provides one, which is useful when the local daemon does not.
 # See docs/HARBOR.md.
+#
+# Status: provisioning and cloning are verified against a real tenant, and the sandbox
+# image was confirmed to carry a working Docker daemon (29.7.2). The setup_scripts block
+# below is NOT yet verified end to end -- a first run failed at `python3 -m venv`, which
+# is why the apt step exists, and the account ran out of sandbox credit before a retry.
+# If `islo use` fails in setup, run the steps by hand and fix this file; nothing else in
+# the repository depends on it.
 
 sources:
   - url: https://github.com/zozo123/GULI-SET
@@ -23,6 +30,10 @@ disk_gb: 10
 setup_scripts:
   - name: benchmark
     script: |
+      # The runner image ships python3 but not the venv module, so a bare
+      # `python3 -m venv` fails. Install it before anything depends on it.
+      sudo apt-get update -qq
+      sudo apt-get install -y -qq python3-venv python3-pip
       python3 -m venv .venv
       .venv/bin/pip install --quiet --upgrade pip
       .venv/bin/pip install --quiet -e '.[dev]'
