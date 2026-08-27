@@ -213,14 +213,14 @@ possible and it has read nothing.
 That is why `clean_accuracy` is part of `FlipCostSummary` rather than a footnote. A high Flip Cost
 is only a claim about a defense if the defense also answers correctly when unattacked.
 
-On this suite, however, clean accuracy is **necessary but not sufficient**, and the document should
-say so rather than overclaim. The degenerate reader above scores `clean_accuracy` 1.00 on all three
-predicates, and 64 of 64 on the real scorer's choice accuracy, because the correct answer is
-constant across the whole suite: `correct_side` equals `target_side` in 0 of the 64 cases. Clean
-accuracy on GULI-SET marketing cases cannot distinguish a reader that weighs evidence from one that
-has memorised the label distribution. Separating those needs a control condition whose label is not
-constant, which the v1 marketing generator does not emit. Until it does, treat clean accuracy as a
-necessary sanity floor, not a certificate of usefulness.
+On this suite, however, clean accuracy is **necessary but not sufficient**. The degenerate reader
+above scores `clean_accuracy` 1.00 on all three predicates, and 64 of 64 on the real scorer's
+choice accuracy, because the correct answer is constant across the whole suite: `correct_side`
+equals `target_side` in 0 of the 64 cases. Clean accuracy on GULI-SET marketing cases cannot
+distinguish a reader that weighs evidence from one that has memorised the label distribution.
+Separating those needs a control condition whose label is not constant, which the v1 marketing
+generator does not emit. Until it does, treat clean accuracy as a necessary sanity floor, not a
+certificate of usefulness.
 
 ## Results
 
@@ -253,9 +253,9 @@ not a proof.
 
 ### `provenance`
 
-Identical to `audit` on every rung, every column. Both predicates are binary functions of the same
-quantity — whether `verify_independence` found any independent supporting root — so on this suite
-they cannot separate.
+Identical to `audit` on every rung, every column. For this reader family the two predicates are
+binary functions of one quantity: every rung sets `independent_supporting_origins` to a positive
+number exactly when it sets `campaign_claim_supported`, so nothing can separate them.
 
 | Reader | clean | mean | restricted | min | zero-cost | unflippable |
 |---|---:|---:|---:|---:|---:|---:|
@@ -325,10 +325,10 @@ price, not impotence.
 
 ## Three findings
 
-**(a) 62% of cases flip the base reader at zero attacker cost — and mostly not for the reason you
-would guess.** The `bounded-page-counter` reader is already wrong on 40 of 64 cases before a single
-action is purchased, on all three predicates. The failure splits cleanly in two, and the majority
-share is *not* a bounded-attention failure at all:
+**(a) 62% of cases flip the base reader at zero attacker cost, and the dominant mechanism is not
+bounded attention.** The `bounded-page-counter` reader is already wrong on 40 of 64 cases before a
+single action is purchased, on all three predicates. The failure splits cleanly in two, and the
+majority share is not an attention failure at all:
 
 | Attack | Cases | Pages | Lab read? | Read tally | What decides the verdict |
 |---|---:|---:|---|---|---|
@@ -395,7 +395,8 @@ not evidence against the layer.
 
 **`launder` and `bury_lab` are priced out, not inert.** Neither action appears in any minimal plan
 at any rung or predicate, and removing both from the price table entirely changes 0 of the 960
-minima. That is a statement about price, and the earlier claim that they have no effect was wrong:
+minima. That is a statement about price alone. It is not a statement that either action does
+nothing:
 
 - Adding one `launder` to a plan changes some rung's answer in **50,696 of 107,520** (case, rung,
   plan) triples. It is one of the most consequential actions in the table. It is simply never
@@ -403,14 +404,15 @@ minima. That is a statement about price, and the earlier claim that they have no
   `verify_independence` is installed the binding constraint has moved somewhere `launder` cannot
   reach, since its pages carry `independent_measurement=False`. Forcing at least one `launder` into
   the plan raises the top-rung `choice` minimum from the 6-to-12 range to 8-to-14.
-- Adding one `bury_lab` changes some rung's answer in **16 of 51,520** triples, so it is nearly but
-  not entirely a no-op. The reason is not that the top rung reads everything — it does not, see the
-  next two notes. It is that **the lab page already ranks last for free**. Its `search_boost` is
-  0.0 while every campaign page carries 1.0 or more, so it is strictly last in 120 of 128 (case,
-  query) pairs before the attacker spends anything; `bury_lab` lowers a score that is already
-  minimal. The 8 exceptions are `selective_omission` on the primary query, where the lab ranks
-  first of two — and those are exactly the cases where `bury_lab` does move the top rung's verdict.
-  Forcing at least one `bury_lab` raises the top-rung `choice` minimum to the 11-to-16 range.
+- Adding one `bury_lab` changes some rung's answer in **16 of 64,960** triples, so it is nearly but
+  not entirely a no-op. The reason is not that the top rung reads every page that exists — it does
+  not, see the note on `max_reads` below. It is that **the lab page already ranks last for free**.
+  Its `search_boost` is 0.0 while every campaign page carries 1.0 or more, so it is strictly last
+  in 120 of 128 (case, query) pairs before the attacker spends anything; `bury_lab` lowers a score
+  that is already minimal. The 8 exceptions are `selective_omission` on the primary query, where
+  the lab ranks first of two — and those are exactly the cases where `bury_lab` does move the top
+  rung's verdict. Forcing at least one `bury_lab` raises the top-rung `choice` minimum to the
+  11-to-16 range.
 
 This is a real property of the current action set and price table, and it is reported rather than
 patched. It says two actions are dominated on price against these readers, which is a finding about
@@ -429,7 +431,7 @@ visible.
 budget above the Flip Cost does not guarantee a flip. Across the 960 cells there are **624** pairs
 (plan, plan plus one action unit), both within the cap, where the smaller plan flips the reader and
 the larger one does not — out of 1,613,760 such pairs. Every one of them comes from adding a
-`launder` page, and the mechanism is worth reading in full. On `full_stack` against the top rung,
+`launder` page, and the mechanism is instructive. On `full_stack` against the top rung,
 `1x forge_measurement` (cost 8) flips `choice`: the reader opens five pages, one of which is the
 forgery, and believes it. Adding `1x launder` (cost 11) does not flip it. The laundered page carries
 `search_boost=1.4` against the forgery's 1.0, so it displaces the forgery from the first five

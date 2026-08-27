@@ -16,11 +16,22 @@ GULI-SET packages **GullibleBench v1.0**, a causal benchmark for manufactured co
 ## Run the 30-second demo
 
 ```bash
+uv venv --python 3.11
+uv pip install -e .
+.venv/bin/gulliblebench demo
+```
+
+<details>
+<summary>without uv</summary>
+
+```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .
 gulliblebench demo
 ```
+
+</details>
 
 ```text
 GULI-SET // META HARNESS
@@ -139,11 +150,11 @@ The four model-visible splits are also on the Hub as [`zozo-ib/gulliblebench`](h
 ## Reproduce everything
 
 ```bash
-python -m venv .venv
+uv venv --python 3.11
+uv pip install -e '.[dev]'
 source .venv/bin/activate
-pip install -e '.[dev]'
 
-ruff check src tests
+ruff check src tests scripts examples
 pytest
 gulliblebench demo
 gulliblebench generate-all
